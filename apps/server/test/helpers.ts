@@ -5,7 +5,7 @@ import { Room } from '../src/Room';
 export const testMap = testMapJson as GameMap;
 
 export function room(onChange: (r: Room) => void = () => {}): Room {
-  return new Room('ABCD', { loadMap: () => testMap, allowedMapIds: ['teste', 'brasil'], rng: mulberry32(1), onChange });
+  return new Room('ABCD', { loadMap: () => testMap, allowedMapIds: ['teste', 'brasil'], rng: mulberry32(1), onChange, provider: 'mapillary' });
 }
 
 export function join(r: Room, nick: string): string {

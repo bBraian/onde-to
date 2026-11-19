@@ -6,7 +6,7 @@ import { testMap } from './helpers';
 beforeEach(() => { vi.useFakeTimers(); });
 afterEach(() => { vi.useRealTimers(); });
 
-const manager = () => new RoomManager({ loadMap: () => testMap, allowedMapIds: ['teste'], rng: mulberry32(7), onChange: () => {} });
+const manager = () => new RoomManager({ loadMap: () => testMap, allowedMapIds: ['teste'], rng: mulberry32(7), onChange: () => {}, provider: 'mapillary' });
 function ok(r: JoinAck) {
   if (!r.ok) throw new Error(r.error);
   return r;

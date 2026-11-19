@@ -1,7 +1,7 @@
 import { createServer as createHttpServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { Server, type Socket } from 'socket.io';
-import type { ClientToServerEvents, JoinAck, ServerToClientEvents } from '@onde-to/shared';
+import type { ClientToServerEvents, JoinAck, ServerToClientEvents, StreetProvider } from '@onde-to/shared';
 import { availableMapIds, loadMapServer } from './maps';
 import { RoomManager } from './RoomManager';
 import type { Room } from './Room';
@@ -51,13 +51,13 @@ export function attachSocket(io: IO, manager: RoomManager): void {
       };
 
     socket.on('room:create', safe((p, ack) => {
-      const res = manager.create(String(p?.session ?? ''), String(p?.nick ?? ''));
+      const res = manager.create(String(p?.session ?? ''), String(p?.nick ?? ''), p?.avatar);
       enter(res);
       if (typeof ack === 'function') ack(res);
     }));
 
     socket.on('room:join', safe((p, ack) => {
-      const res = manager.join(String(p?.code ?? ''), String(p?.session ?? ''), String(p?.nick ?? ''));
+      const res = manager.join(String(p?.code ?? ''), String(p?.session ?? ''), String(p?.nick ?? ''), p?.avatar);
       enter(res);
       if (typeof ack === 'function') ack(res);
     }));
@@ -71,6 +71,7 @@ export function attachSocket(io: IO, manager: RoomManager): void {
       c.room.removePlayer(c.playerId);
     }));
 
+    socket.on('room:avatar', safe((p) => { const c = ctx(); c?.room.setAvatar(c.playerId, p); }));
     socket.on('room:settings', safe((p) => { const c = ctx(); c?.room.updateSettings(c.playerId, p ?? {}); }));
     socket.on('room:team', safe((p) => { const c = ctx(); if (c && p) c.room.setTeam(c.playerId, String(p.playerId), p.team); }));
     socket.on('room:start', safe(() => { const c = ctx(); c?.room.start(c.playerId); }));
@@ -95,6 +96,7 @@ export async function createServer(opts: {
   port: number;
   corsOrigin: string;
   enableTestMap: boolean;
+  provider?: StreetProvider;
 }): Promise<{ close(): Promise<void>; port: number }> {
   const http = createHttpServer((req, res) => {
     if (req.method === 'GET' && req.url === '/health') {
@@ -105,9 +107,11 @@ export async function createServer(opts: {
   });
 
   const io: IO = new Server(http, { cors: { origin: opts.corsOrigin } });
+  const provider = opts.provider ?? 'mapillary';
   const manager = new RoomManager({
-    loadMap: loadMapServer,
-    allowedMapIds: availableMapIds(opts.enableTestMap),
+    loadMap: (id) => loadMapServer(id, provider),
+    allowedMapIds: availableMapIds(opts.enableTestMap, provider),
+    provider,
     rng: Math.random,
     onChange: (room) => io.to(room.code).emit('room:state', room.view()),
   });

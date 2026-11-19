@@ -90,3 +90,16 @@ test('payload malformado não derruba o servidor', async () => {
   a.emit('room:start');
   await nextState(a, (v) => v.phase === 'round');
 });
+
+test('avatar vai no join e room:avatar atualiza', async () => {
+  const a = await connect(), b = await connect();
+  const created = await a.emitWithAck('room:create', { nick: 'Ana', session: 's1' });
+  if (!created.ok) throw new Error(created.error);
+  const coroa = { color: '#3A86FF', eyes: 'oculos', mouth: 'risada', acc: 'coroa' } as const;
+  const seen = nextState(a, (v) => v.players.length === 2);
+  await b.emitWithAck('room:join', { code: created.code, nick: 'Bia', session: 's2', avatar: coroa });
+  expect((await seen).players[1].avatar).toEqual(coroa);
+  const changed = nextState(a, (v) => v.players[1].avatar.acc === 'gorro');
+  b.emit('room:avatar', { ...coroa, acc: 'gorro' });
+  await changed;
+});

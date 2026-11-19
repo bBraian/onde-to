@@ -3,8 +3,11 @@ import {
   DEFAULT_SETTINGS,
   duelMultiplier,
   resolveDuelRound,
+  roundPoints,
+  sanitizeAvatar,
   sanitizeSettings,
   scoreGuess,
+  type Avatar,
   type GameMap,
   type GuessResult,
   type LatLng,
@@ -13,6 +16,7 @@ import {
   type RoomSettings,
   type RoomView,
   type RoundResultView,
+  type StreetProvider,
   type TeamId,
 } from '@onde-to/shared';
 
@@ -21,6 +25,7 @@ export interface RoomDeps {
   allowedMapIds: string[];
   rng: () => number;
   onChange(room: Room): void;
+  provider: StreetProvider;
 }
 
 export const MAX_PLAYERS = 8;
@@ -31,6 +36,7 @@ interface Player {
   id: string;
   session: string;
   nick: string;
+  avatar: Avatar;
   team: TeamId | null;
   connected: boolean;
   spectator: boolean;
@@ -84,10 +90,11 @@ export class Room {
 
   // ── jogadores ────────────────────────────────────────────────────────────
 
-  addPlayer(session: string, nick: string): { playerId: string } | { error: 'full' } {
+  addPlayer(session: string, nick: string, avatar?: unknown): { playerId: string } | { error: 'full' } {
     const existing = this.players.find((p) => p.session === session);
     if (existing) {
       existing.connected = true;
+      if (avatar !== undefined) existing.avatar = sanitizeAvatar(avatar);
       this.cancelPresenceTimers(existing.id);
       this.ensureHost();
       this.changed();
@@ -98,6 +105,7 @@ export class Room {
       id: `p${++this.seq}`,
       session,
       nick,
+      avatar: sanitizeAvatar(avatar),
       team: this.smallerTeam(),
       connected: true,
       spectator: this.phase !== 'lobby',
@@ -107,6 +115,13 @@ export class Room {
     if (!this.hostId) this.hostId = player.id;
     this.changed();
     return { playerId: player.id };
+  }
+
+  setAvatar(playerId: string, avatar: unknown): void {
+    const p = this.player(playerId);
+    if (!p) return;
+    p.avatar = sanitizeAvatar(avatar);
+    this.changed();
   }
 
   hasSession(session: string): boolean {
@@ -244,6 +259,7 @@ export class Room {
       players: this.players.map((p) => ({
         id: p.id,
         nick: p.nick,
+        avatar: p.avatar,
         team: p.team,
         isHost: p.id === this.hostId,
         connected: p.connected,
@@ -261,6 +277,7 @@ export class Room {
       nextAt: this.phase === 'result' ? this.nextAt : null,
       winner: this.winner,
       serverNow: Date.now(),
+      provider: this.deps.provider,
     };
   }
 
@@ -311,9 +328,14 @@ export class Room {
     const guesses: GuessResult[] = this.activePlayers().map((p) => {
       const g = this.guesses.get(p.id) ?? null;
       const { distanceKm, score } = scoreGuess(g, this.point!, this.map!.tamanhoKm);
-      p.total += score;
       return { playerId: p.id, guess: g, distanceKm, score };
     });
+    // Clássico com pontuação "Rodada": o mais próximo faz 1 ponto; senão soma a pontuação de distância.
+    const byRound = this.settings.mode === 'classic' && this.settings.scoring === 'rounds' ? roundPoints(guesses) : null;
+    for (const g of guesses) {
+      const p = this.player(g.playerId);
+      if (p) p.total += byRound ? byRound[g.playerId] : g.score;
+    }
     let duel: RoundResultView['duel'] = null;
     if (this.settings.mode === 'duel' && this.duelHp) {
       const best = (t: TeamId) =>
