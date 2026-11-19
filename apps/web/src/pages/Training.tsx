@@ -192,7 +192,10 @@ function Summary({ state, onAgain, onSetup }: { state: Extract<ReturnType<typeof
   const saved = useRef<{ best: number; isNew: boolean } | null>(null);
   if (!saved.current) saved.current = saveRecord(recordKey(state.settings), state.total);
   const record = saved.current;
-  useEffect(() => window.scrollTo(0, 0), []);
+  useEffect(() => {
+    // Em Chrome recente scrollTo devolve uma Promise; o efeito não pode retorná-la como "cleanup".
+    window.scrollTo(0, 0);
+  }, []);
   return (
     <div className="page">
       <header className="topbar">
