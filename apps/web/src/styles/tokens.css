@@ -1,0 +1,70 @@
+/* Identidade "mapa de campo" — aprovada em 2026-11-19 (mockup: claude.ai/artifact/T1UWzK7YVCViaNjZL4dbjh) */
+:root {
+  --font-display: 'Bricolage Grotesque', 'Inter', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+
+  --paper: #F4F1E8;
+  --paper-2: #FBFAF6;
+  --card: #FFFFFF;
+  --line: #DCD6C6;
+  --line-strong: #B9B29F;
+  --ink: #17231E;
+  --ink-2: #4A5A52;
+  --ink-3: #56655D;
+  --on-ink: #F4F1E8;
+  --on-ink-2: #C9D3CC;
+
+  --green: #1F6B4F;
+  --green-dark: #164D39;
+  --on-green: #FFFFFF;
+  --accent: #E2582A;
+  --warn: #F2B33D;
+
+  --team-a: #B8461A;
+  --team-a-soft: #FBF1EC;
+  --team-a-bar: #E2582A;
+  --team-b: #2563C9;
+  --team-b-soft: #EEF3FC;
+  --team-b-bar: #4C86E8;
+  --guessed: #8BE0B5;
+
+  --water: #A9CBD6;
+  --land: #E9E2CC;
+  --street-sky: #6F8C9B;
+  --street-ground: #3B423D;
+  --hud: #17231E;
+
+  --radius-s: 10px;
+  --radius-m: 14px;
+  --radius-l: 20px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --paper: #111915;
+    --paper-2: #18221D;
+    --card: #1B2620;
+    --line: #2E3B34;
+    --line-strong: #46564D;
+    --ink: #EEF0EA;
+    --ink-2: #B5C1B9;
+    --ink-3: #A3B0A8;
+    --on-ink: #111915;
+    --on-ink-2: #2E3B34;
+    --green: #3FA27A;
+    --green-dark: #2E8A64;
+    --on-green: #0B1410;
+    --team-a: #F08A5D;
+    --team-a-soft: #2C1F18;
+    --team-b: #7FA8F0;
+    --team-b-soft: #18223A;
+    --land: #2A332C;
+    --water: #1E3640;
+  }
+}
