@@ -1,0 +1,22 @@
+{
+  "name": "server",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "dev": "tsx watch src/index.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "dependencies": {
+    "@onde-to/shared": "workspace:*",
+    "socket.io": "^4.8.4",
+    "tsx": "^4.23.15"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "socket.io-client": "^4.8.4",
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.1"
+  }
+}
