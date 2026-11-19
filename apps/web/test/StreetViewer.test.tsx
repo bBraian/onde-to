@@ -28,7 +28,7 @@ vi.mock('mapillary-js', () => {
   return { Viewer, CancelMapillaryError };
 });
 
-const { StreetViewer } = await import('../src/components/StreetViewer');
+const { MapillaryViewer: StreetViewer } = await import('../src/components/street/MapillaryViewer');
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 const flush = () => act(async () => { await new Promise((r) => setTimeout(r, 0)); });

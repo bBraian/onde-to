@@ -1,3 +1,5 @@
+import type { StreetProvider } from '@onde-to/shared';
+
 // Único ponto que lê as variáveis de ambiente do Vite. Leitura preguiçosa para que testes possam trocá-las.
 const vars = () => import.meta.env;
 
@@ -13,5 +15,12 @@ export const config = {
   },
   get enableTestMap(): boolean {
     return vars().VITE_ENABLE_TEST_MAP === '1';
+  },
+  /** Provedor das fotos de rua: 'google' só quando configurado; o padrão é o Mapillary. */
+  get streetProvider(): StreetProvider {
+    return vars().VITE_STREET_PROVIDER === 'google' ? 'google' : 'mapillary';
+  },
+  get googleMapsKey(): string {
+    return vars().VITE_GOOGLE_MAPS_KEY ?? '';
   },
 };

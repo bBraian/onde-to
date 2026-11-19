@@ -8,9 +8,7 @@ import { RoundView } from './room/RoundView';
 import { RoundResult } from './room/RoundResult';
 import { Finished } from './room/Finished';
 import { providerMismatch } from './room/helpers';
-
-/** Provedor de imagens deste site (o Task 8 passa a ler da configuração). */
-const SITE_PROVIDER = 'mapillary' as const;
+import { config } from '../lib/config';
 
 export function Room() {
   const { code = NEW_ROOM } = useParams();
@@ -62,10 +60,11 @@ function RoomSession({ code, nick, onBadNick }: { code: string; nick: string; on
     );
   }
 
-  if (providerMismatch(view, SITE_PROVIDER)) {
+  const siteProvider = config.streetProvider;
+  if (providerMismatch(view, siteProvider)) {
     return (
       <Message title="Configuração diferente">
-        Servidor e site usam provedores diferentes (servidor: {view.provider}, site: {SITE_PROVIDER}).
+        Servidor e site usam provedores diferentes (servidor: {view.provider}, site: {siteProvider}).
         <Link to="/" className="btn btn-primary">Voltar ao início</Link>
       </Message>
     );
