@@ -1,6 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Map as MlMap, Marker } from 'maplibre-gl';
-import 'maplibre-gl/dist/maplibre-gl.css';
+import { Map as MlMap, Marker } from './maplibre';
 import type { LatLng } from '@onde-to/shared';
 import { MAP_STYLE, toLngLat, type MapView } from './mapStyle';
 
