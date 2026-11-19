@@ -46,6 +46,11 @@ export function RoundResult({ view, me, offsetMs, send }: Props) {
 
         {duel && result.duel && view.duelHp && (
           <div className="card compact">
+            <p className="duel-scores" data-testid="team-scores">
+              <span className="hp-name-A">{TEAM_NAME.A}: {formatPoints(result.duel.teamScores.A)}</span>
+              {' · '}
+              <span className="hp-name-B">{TEAM_NAME.B}: {formatPoints(result.duel.teamScores.B)}</span>
+            </p>
             <p className="duel-summary">
               {result.duel.damagedTeam
                 ? `${TEAM_NAME[result.duel.damagedTeam]} perdeu ${formatPoints(result.duel.damage)} de vida${result.duel.multiplier > 1 ? ` (${String(result.duel.multiplier).replace('.', ',')}×)` : ''}`

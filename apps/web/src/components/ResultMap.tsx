@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { LngLatBounds, Map as MlMap, Marker } from './maplibre';
 import type { LatLng, MapPoint } from '@onde-to/shared';
 import { MAP_STYLE, toLngLat } from './mapStyle';
@@ -29,6 +29,9 @@ function bubbleElement(label: string, color: string): HTMLElement {
 
 export function ResultMap({ answer, guesses }: { answer: MapPoint; guesses: ResultGuess[] }) {
   const container = useRef<HTMLDivElement>(null);
+  // O servidor manda objetos novos a cada mensagem: o mapa só é refeito quando o conteúdo muda,
+  // senão um reconectar de alguém zeraria o zoom de todo mundo.
+  const signature = useMemo(() => JSON.stringify([answer.imageId, answer.lat, answer.lng, guesses]), [answer, guesses]);
 
   useEffect(() => {
     if (!container.current) return;
@@ -67,7 +70,8 @@ export function ResultMap({ answer, guesses }: { answer: MapPoint; guesses: Resu
       ro.disconnect();
       m.remove();
     };
-  }, [answer, guesses]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [signature]);
 
   return <div ref={container} className="result-map-canvas" data-testid="result-map" />;
 }
