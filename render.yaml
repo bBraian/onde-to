@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: onde-to-server
+    runtime: node
+    plan: free
+    buildCommand: corepack enable && pnpm install --frozen-lockfile
+    startCommand: pnpm --filter server start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: CORS_ORIGIN
+        sync: false
