@@ -17,6 +17,11 @@ test('canStart: duelo exige gente nos dois times', () => {
   expect(canStart(view({ players: [p('a', 'A')] }))).toBe(true);
 });
 
+test('canStart: desconectado não conta para formar time no duelo', () => {
+  const duel = { ...DEFAULT_SETTINGS, mode: 'duel' as const };
+  expect(canStart(view({ settings: duel, players: [p('a', 'A'), p('b', 'B', { connected: false })] }))).toBe(false);
+});
+
 test('playerColor usa a cor do time no duelo e paleta por jogador no clássico', () => {
   const players = [p('a', 'A'), p('b', 'A')];
   const duel = view({ settings: { ...DEFAULT_SETTINGS, mode: 'duel' }, players });

@@ -19,7 +19,7 @@ export function canStart(v: RoomView): boolean {
   const active = activePlayers(v);
   if (active.length === 0) return false;
   if (!isDuel(v)) return true;
-  return (['A', 'B'] as TeamId[]).every((t) => active.some((p) => p.team === t));
+  return (['A', 'B'] as TeamId[]).every((t) => active.some((p) => p.team === t && p.connected));
 }
 
 export function isLastRound(v: RoomView): boolean {

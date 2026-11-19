@@ -69,6 +69,8 @@ export class Room {
   private roundTimer: ReturnType<typeof setTimeout> | null = null;
   private nextTimer: ReturnType<typeof setTimeout> | null = null;
   private hostTimer: ReturnType<typeof setTimeout> | null = null;
+  /** Desde quando o host está offline (null = online). Passada a carência, quem estiver conectado assume. */
+  private hostOfflineSince: number | null = null;
   private dropTimers = new Map<string, ReturnType<typeof setTimeout>>();
   private duelHp: Record<TeamId, number> | null = null;
   private seq = 0;
@@ -87,6 +89,7 @@ export class Room {
     if (existing) {
       existing.connected = true;
       this.cancelPresenceTimers(existing.id);
+      this.ensureHost();
       this.changed();
       return { playerId: existing.id };
     }
@@ -116,13 +119,13 @@ export class Room {
     p.connected = connected;
     if (connected) {
       this.cancelPresenceTimers(playerId);
+      this.ensureHost();
     } else {
       if (this.isHost(playerId)) {
-        this.hostTimer = setTimeout(() => this.transferHost(playerId), HOST_GRACE_MS);
+        this.hostOfflineSince = Date.now();
+        this.hostTimer = setTimeout(() => this.ensureHost(true), HOST_GRACE_MS);
       }
-      if (this.phase === 'lobby') {
-        this.dropTimers.set(playerId, setTimeout(() => this.dropIfGone(playerId), LOBBY_DROP_MS));
-      }
+      if (this.phase === 'lobby') this.armLobbyDrop(playerId);
     }
     if (this.phase === 'round' && this.allGuessed()) return this.finishRound();
     this.changed();
@@ -133,7 +136,11 @@ export class Room {
     if (idx < 0) return;
     this.players.splice(idx, 1);
     this.cancelPresenceTimers(playerId);
-    if (this.hostId === playerId) this.hostId = this.nextHost(playerId);
+    if (this.hostId === playerId) {
+      this.hostId = this.nextHost(playerId);
+      // Novo host desconectado: o primeiro que voltar assume, sem esperar carência.
+      this.hostOfflineSince = this.host()?.connected === false ? -Infinity : null;
+    }
     if (this.phase === 'round' && this.allGuessed()) return this.finishRound();
     this.changed();
   }
@@ -162,7 +169,8 @@ export class Room {
   start(byId: string): void {
     if (!this.isHost(byId) || this.phase !== 'lobby') return;
     const duel = this.settings.mode === 'duel';
-    if (duel && !(['A', 'B'] as TeamId[]).every((t) => this.activePlayers().some((p) => p.team === t))) return;
+    const present = (t: TeamId) => this.activePlayers().some((p) => p.team === t && p.connected);
+    if (duel && !(['A', 'B'] as TeamId[]).every(present)) return;
     this.map = this.deps.loadMap(this.settings.mapId);
     this.duelHp = duel ? { A: this.settings.duelStartHp, B: this.settings.duelStartHp } : null;
     this.deck = createDeck(this.map.pontos, this.deps.rng);
@@ -180,6 +188,8 @@ export class Room {
       p.spectator = false;
     }
     this.phase = 'lobby';
+    // Quem caiu durante a partida e não voltou sai do lobby depois do prazo normal.
+    for (const p of this.players) if (!p.connected) this.armLobbyDrop(p.id);
     this.roundNumber = 0;
     this.point = null;
     this.deadline = null;
@@ -366,14 +376,31 @@ export class Room {
     return (others.find((p) => p.connected) ?? others[0])?.id ?? null;
   }
 
-  private transferHost(fromId: string): void {
-    this.hostTimer = null;
-    const p = this.player(fromId);
-    if (!p || p.connected || this.hostId !== fromId) return;
-    const next = this.players.find((x) => x.id !== fromId && x.connected);
+  private host(): Player | undefined {
+    return this.hostId ? this.player(this.hostId) : undefined;
+  }
+
+  /** Passa o host para o conectado mais antigo se o atual está offline além da carência (ou se `force`, ao fim dela). */
+  private ensureHost(force = false): void {
+    if (force) this.hostTimer = null;
+    const h = this.host();
+    if (h?.connected) {
+      this.hostOfflineSince = null;
+      return;
+    }
+    const expired = force || (this.hostOfflineSince !== null && Date.now() - this.hostOfflineSince >= HOST_GRACE_MS);
+    if (h && !expired) return;
+    const next = this.players.find((x) => x.connected);
     if (!next) return;
     this.hostId = next.id;
+    this.hostOfflineSince = null;
     this.changed();
+  }
+
+  private armLobbyDrop(playerId: string): void {
+    const prev = this.dropTimers.get(playerId);
+    if (prev) clearTimeout(prev);
+    this.dropTimers.set(playerId, setTimeout(() => this.dropIfGone(playerId), LOBBY_DROP_MS));
   }
 
   private dropIfGone(playerId: string): void {
