@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Viewer, type ComponentOptions } from 'mapillary-js';
+import { CancelMapillaryError, Viewer, type ComponentOptions } from 'mapillary-js';
 import 'mapillary-js/dist/mapillary.css';
 import type { Movement } from '@onde-to/shared';
 import { config } from '../lib/config';
@@ -36,10 +36,17 @@ export function StreetViewer({ imageId, movement, onError }: Props) {
     setFailed(false);
     const v = viewer.current;
     if (!v) return;
-    v.moveTo(imageId).catch(() => {
+    let active = true;
+    v.moveTo(imageId).catch((err: unknown) => {
+      // Um moveTo novo ("Voltar ao início", setas) ou o remove() do visor cancelam o pedido pendente:
+      // isso não é imagem quebrada. Também ignoramos qualquer resposta depois de desmontar.
+      if (!active || err instanceof CancelMapillaryError) return;
       setFailed(true);
       onErrorRef.current?.();
     });
+    return () => {
+      active = false;
+    };
   }, [imageId, movement]);
 
   if (config.fakeViewer) {
