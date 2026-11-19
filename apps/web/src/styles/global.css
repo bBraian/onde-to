@@ -1,0 +1,76 @@
+*, *::before, *::after { box-sizing: border-box; }
+html, body, #root { margin: 0; min-height: 100%; }
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--green); }
+a:hover { color: var(--green-dark); }
+h1, h2, h3 { font-family: var(--font-display); letter-spacing: -0.02em; }
+button { font: inherit; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+/* ── botões ─────────────────────────────────────────── */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 48px; padding: 0 20px; border-radius: var(--radius-m);
+  border: 1.5px solid transparent; font-weight: 700; font-size: 16px; cursor: pointer;
+  text-decoration: none;
+}
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-primary { background: var(--green); color: var(--on-green); }
+.btn-primary:not(:disabled):hover { background: var(--green-dark); }
+.btn-light { background: var(--paper); color: var(--ink); }
+.btn-outline { background: transparent; color: var(--ink); border-color: var(--ink); }
+.btn-ghost-light { background: transparent; color: #F4F1E8; border-color: #F4F1E8; min-height: 44px; font-size: 14px; font-weight: 600; padding: 0 14px; }
+.btn-hud { background: var(--hud); color: #F4F1E8; min-height: 44px; font-size: 14px; font-weight: 600; padding: 0 14px; }
+.btn-block { width: 100%; }
+.btn-lg { min-height: 52px; font-size: 17px; }
+
+/* ── formulários ────────────────────────────────────── */
+.input, .select {
+  min-height: 44px; border: 1.5px solid var(--line-strong); border-radius: var(--radius-s);
+  padding: 0 12px; font: 500 15px var(--font-body); background: var(--paper-2); color: var(--ink);
+}
+.input-code { flex: 1 1 auto; min-width: 0; min-height: 48px; font-weight: 700; font-size: 20px; letter-spacing: 0.25em; text-transform: uppercase; }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field > label, .field > legend { font-size: 13px; font-weight: 600; color: var(--ink-2); padding: 0; }
+fieldset.field { border: 0; margin: 0; padding: 0; }
+.segmented { display: flex; gap: 6px; background: var(--line); padding: 4px; border-radius: var(--radius-m); }
+.segmented button { flex: 1 1 0; min-height: 40px; border: 0; border-radius: 9px; background: transparent; color: var(--ink); font-weight: 600; cursor: pointer; }
+.segmented button[aria-pressed='true'] { background: var(--ink); color: var(--paper); }
+.row { display: flex; gap: 10px; }
+
+/* ── cartões e layout ───────────────────────────────── */
+.card {
+  flex: 1 1 280px; background: var(--card); border: 1.5px solid var(--line); border-radius: var(--radius-l);
+  padding: 28px; display: flex; flex-direction: column; gap: 14px;
+}
+.card h2 { margin: 0; font-size: 26px; font-weight: 800; }
+.card p { margin: 0; font-size: 15px; line-height: 1.5; color: var(--ink-2); flex-grow: 1; }
+.card label { font-size: 14px; color: var(--ink-2); }
+.card-dark { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.card-dark p { color: var(--on-ink-2); }
+.eyebrow { margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--green); }
+.muted { color: var(--ink-2); }
+.logo { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink); font-family: var(--font-display); font-weight: 800; letter-spacing: -0.02em; }
+.logo:hover { color: var(--ink); }
+.topbar { position: relative; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; padding: 20px 32px; }
+.page { min-height: 100vh; display: flex; flex-direction: column; }
+.center-msg { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 32px 16px; text-align: center; }
+
+/* ── início ─────────────────────────────────────────── */
+.home { position: relative; overflow: hidden; min-height: 100vh; display: flex; flex-direction: column; }
+.home-contours { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.home-main { position: relative; flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 40px; padding: 24px 16px 48px; }
+.home-hero { text-align: center; max-width: 760px; }
+.home-hero h1 { margin: 14px 0 0; font-weight: 800; font-size: clamp(40px, 7vw, 64px); line-height: 1.02; letter-spacing: -0.03em; }
+.lead { margin: 18px auto 0; max-width: 560px; font-size: 18px; line-height: 1.5; color: var(--ink-2); }
+.home-cards { width: 100%; max-width: 1040px; display: flex; flex-wrap: wrap; gap: 20px; }
+.home-footer { position: relative; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; padding: 18px 32px; font-size: 13px; color: var(--ink-3); }
+
+@media (max-width: 600px) {
+  .topbar, .home-footer { padding-left: 16px; padding-right: 16px; }
+}
