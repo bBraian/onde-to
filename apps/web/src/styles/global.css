@@ -74,3 +74,27 @@ fieldset.field { border: 0; margin: 0; padding: 0; }
 @media (max-width: 600px) {
   .topbar, .home-footer { padding-left: 16px; padding-right: 16px; }
 }
+
+/* ── visor de rua ───────────────────────────────────── */
+.street { position: absolute; inset: 0; background: var(--street-ground); }
+.street-canvas { position: absolute; inset: 0; }
+.street-fake { display: flex; align-items: center; justify-content: center; color: #F4F1E8; font-weight: 700; font-size: 20px;
+  background: linear-gradient(var(--street-sky) 0 52%, #4E5E55 52% calc(52% + 3px), var(--street-ground) calc(52% + 3px)); }
+.street-msg { position: absolute; left: 50%; top: 46%; transform: translate(-50%, -50%); max-width: 80%; text-align: center;
+  padding: 18px 24px; border-radius: var(--radius-m); background: var(--hud); color: #F4F1E8; font-weight: 700; }
+.street-back { position: absolute; left: 16px; bottom: 76px; z-index: 2; }
+.attribution { font-size: 12px; }
+.attribution a { color: inherit; }
+
+/* ── mapas ──────────────────────────────────────────── */
+.guess-map-canvas, .result-map-canvas { position: absolute; inset: 0; }
+.map-pin { cursor: default; }
+.map-bubble { width: 28px; height: 28px; border-radius: 50%; color: #fff; display: flex; align-items: center; justify-content: center;
+  font: 700 13px var(--font-body); border: 2px solid #fff; box-shadow: 0 1px 3px rgb(0 0 0 / 0.35); }
+.guess-panel { position: absolute; right: 16px; bottom: 16px; z-index: 3; width: 380px; max-width: calc(100% - 32px);
+  display: flex; flex-direction: column; gap: 8px; transition: width 160ms ease; }
+.guess-panel:hover, .guess-panel:focus-within { width: min(640px, calc(100% - 32px)); }
+.guess-panel .guess-map { position: relative; height: 240px; border-radius: 16px; overflow: hidden; border: 3px solid var(--hud);
+  background: var(--water); transition: height 160ms ease; }
+.guess-panel:hover .guess-map, .guess-panel:focus-within .guess-map { height: 420px; }
+@media (prefers-reduced-motion: reduce) { .guess-panel, .guess-panel .guess-map { transition: none; } }
