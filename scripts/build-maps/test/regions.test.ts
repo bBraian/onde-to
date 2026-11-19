@@ -45,3 +45,9 @@ test('regiões de país: nome em português, sem Antártida, e checam se o ponto
   const p = de.sample(mulberry32(1));
   expect(de.contains!(p)).toBe(true);
 });
+
+test('região de capital só aceita imagem perto da capital', () => {
+  const r = capitaisMundoSpec(places, countries).regions[0];
+  expect(r.contains!({ lat: 52.5, lng: 13.4 })).toBe(true);
+  expect(r.contains!({ lat: 52.5, lng: 14.4 })).toBe(false); // ~68 km
+});

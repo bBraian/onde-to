@@ -8,13 +8,6 @@ export interface MlyImage {
   creator: string | null;
 }
 
-export type BBox = [number, number, number, number];
-
-/** bbox [minLng, minLat, maxLng, maxLat] em volta de `p`. Com o padrão 0.045 a área é 0.0081 grau² (< 0.01). */
-export function bboxAround(p: LatLng, halfDeg = 0.045): BBox {
-  return [p.lng - halfDeg, p.lat - halfDeg, p.lng + halfDeg, p.lat + halfDeg];
-}
-
 export function pickImage(images: MlyImage[], minQuality: number, rng: () => number): MlyImage | null {
   const ok = images.filter((i) => i.quality === null || i.quality >= minQuality);
   if (ok.length === 0) return null;

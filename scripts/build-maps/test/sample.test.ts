@@ -1,10 +1,4 @@
-import { bboxAround, pickImage, tooClose, mapSizeKm } from '../src/sample';
-
-test('bboxAround respeita o limite de 0,01 grau² do Mapillary', () => {
-  const [a, b, c, d] = bboxAround({ lat: -23.5, lng: -46.6 });
-  expect((c - a) * (d - b)).toBeLessThan(0.01);
-  expect(a).toBeLessThan(-46.6); expect(c).toBeGreaterThan(-46.6);
-});
+import { pickImage, tooClose, mapSizeKm } from '../src/sample';
 
 test('pickImage filtra qualidade baixa', () => {
   expect(pickImage([{ id: '1', lat: 0, lng: 0, quality: 0.2, creator: null }], 0.5, () => 0)).toBeNull();

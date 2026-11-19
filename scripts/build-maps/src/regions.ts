@@ -3,7 +3,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import turfArea from '@turf/area';
 import booleanPointInPolygon from '@turf/boolean-point-in-polygon';
-import { WORLD_SIZE_KM, type LatLng } from '@onde-to/shared';
+import { haversineKm, WORLD_SIZE_KM, type LatLng } from '@onde-to/shared';
 import type { MapSpec, Region } from './build';
 import { allocateTargets, randomInDisk } from './sample';
 
@@ -110,7 +110,13 @@ export function capitaisMundoSpec(placesFc: { features: any[] }, countriesFc: { 
 }
 
 function diskRegions(centers: { name: string; lat: number; lng: number }[], perCenter: number, radiusKm: number): Region[] {
-  return centers.map((c) => ({ name: c.name, target: perCenter, sample: (rng) => randomInDisk(c, radiusKm, rng) }));
+  return centers.map((c) => ({
+    name: c.name,
+    target: perCenter,
+    sample: (rng) => randomInDisk(c, radiusKm, rng),
+    // a imagem de uma sequência pode estar longe do ponto sorteado: aceita até 1,5× o raio
+    contains: (p: LatLng) => haversineKm(c, p) <= radiusKm * 1.5,
+  }));
 }
 
 export const MAP_IDS = ['brasil', 'capitais-br', 'capitais-mundo', 'mundo'] as const;
@@ -121,7 +127,7 @@ export async function loadSpec(mapId: string): Promise<MapSpec> {
       const fc = await cachedJson(IBGE_UF, 'ibge-uf.json');
       const features: Feature[] = fc.features;
       const names = features.map((f) => UF_BY_CODE[String(f.properties.codarea)] ?? String(f.properties.codarea));
-      return { id: 'brasil', nome: 'Brasil', minKm: 5, regions: areaRegions(features, names, 500, { min: 8 }) };
+      return { id: 'brasil', nome: 'Brasil', minKm: 5, tileZoom: 11, regions: areaRegions(features, names, 500, { min: 8 }) };
     }
     case 'capitais-br': {
       const caps: { nome: string; uf: string; lat: number; lng: number }[] = JSON.parse(
@@ -142,6 +148,7 @@ export async function loadSpec(mapId: string): Promise<MapSpec> {
         nome: 'Mundo',
         minKm: 20,
         fixedSizeKm: WORLD_SIZE_KM,
+        tileZoom: 11,
         regions: countryRegions(fc, 1000, { min: 1, cap: 40 }),
       };
     }

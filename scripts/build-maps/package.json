@@ -13,7 +13,9 @@
     "@turf/boolean-point-in-polygon": "^7.4.0"
   },
   "devDependencies": {
+    "@mapbox/vector-tile": "^3.0.0",
     "@types/node": "^22.0.0",
+    "pbf": "^5.2.0",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
     "vitest": "^5.1.1"

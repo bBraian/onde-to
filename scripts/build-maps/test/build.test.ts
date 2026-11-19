@@ -71,3 +71,18 @@ test('mapa com menos de 100 pontos não é publicável', () => {
   expect(isPublishable({ id: 'x', nome: 'X', tamanhoKm: 1, pontos: pts(99) })).toBe(false);
   expect(isPublishable({ id: 'x', nome: 'X', tamanhoKm: 1, pontos: pts(100) })).toBe(true);
 });
+
+test('usa a posição exata e o autor que o resolve devolve', async () => {
+  const search = async () => [{ id: 'a', lat: 0, lng: 0, quality: 0.9, creator: null }];
+  const resolve = async () => ({ id: 'a', lat: 5, lng: 6, quality: 0.9, creator: 'caio' });
+  const { map } = await buildMap({ id: 'x', nome: 'X', regions: [{ name: 'R', target: 1, sample: () => ({ lat: 0, lng: 0 }) }], minKm: 1 }, search, mulberry32(1), 20, 1, resolve);
+  expect(map.pontos).toEqual([{ imageId: 'a', lat: 5, lng: 6, regiao: 'R', autor: 'caio' }]);
+});
+
+test('candidato que o resolve não acha é descartado', async () => {
+  let n = 0;
+  const search = async () => [{ id: `c${++n}`, lat: n, lng: n, quality: 0.9, creator: null }];
+  const resolve = async (i: { id: string; lat: number; lng: number }) => (i.id === 'c1' ? null : { ...i, quality: 0.9, creator: null });
+  const { map } = await buildMap({ id: 'x', nome: 'X', regions: [{ name: 'R', target: 1, sample: () => ({ lat: 0, lng: 0 }) }], minKm: 1 }, search, mulberry32(1), 20, 1, resolve);
+  expect(map.pontos.map((p) => p.imageId)).toEqual(['c2']);
+});

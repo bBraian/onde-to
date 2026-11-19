@@ -3,7 +3,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { mulberry32 } from '@onde-to/shared';
 import { buildMap, isPublishable, MIN_POINTS } from './build';
-import { searchPanos } from './mapillary';
+import { createTileSource } from './mapillary';
 import { loadSpec, MAP_IDS } from './regions';
 
 const OUT_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', 'packages', 'shared', 'maps');
@@ -20,7 +20,10 @@ async function main() {
     const spec = await loadSpec(id);
     const target = spec.regions.reduce((s, r) => s + r.target, 0);
     console.log(`\n▶ ${spec.nome}: alvo ${target} pontos em ${spec.regions.length} regiões`);
-    const { map, report } = await buildMap(spec, (bbox) => searchPanos(bbox, token), mulberry32(Date.now()), 20, 8);
+    const source = createTileSource(token, spec.tileZoom ?? 12);
+    const started = Date.now();
+    const { map, report } = await buildMap(spec, (p) => source.candidates(p), mulberry32(Date.now()), 20, 8, (img) => source.resolve(img));
+    console.log(`  levou ${Math.round((Date.now() - started) / 1000)} s`);
     const publishable = isPublishable(map);
     if (publishable) writeFileSync(join(OUT_DIR, `${id}.json`), JSON.stringify(map) + '\n');
     const short = Object.entries(report).filter(([, r]) => r.got < r.target);
