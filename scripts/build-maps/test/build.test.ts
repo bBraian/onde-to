@@ -33,3 +33,41 @@ test('buildMap descarta pontos próximos demais e usa fixedSizeKm', async () => 
   expect(map.pontos).toHaveLength(1);
   expect(map.tamanhoKm).toBe(14916.862);
 });
+
+import { FatalSearchError } from '../src/mapillary';
+import { isPublishable, MIN_POINTS } from '../src/build';
+
+test('buildMap descarta imagem fora da região', async () => {
+  let n = 0;
+  const search = async () => {
+    n++;
+    return [{ id: `i${n}`, lat: n % 2 ? -1 - n : 1 + n, lng: n, quality: 0.9, creator: null }];
+  };
+  const region = { name: 'Norte', target: 3, sample: () => ({ lat: 0, lng: 0 }), contains: (p: { lat: number }) => p.lat > 0 };
+  const { map } = await buildMap({ id: 'x', nome: 'X', regions: [region], minKm: 1 }, search, mulberry32(1));
+  expect(map.pontos).toHaveLength(3);
+  expect(map.pontos.every((p) => p.lat > 0)).toBe(true);
+});
+
+test('erro passageiro numa busca não derruba o mapa', async () => {
+  let n = 0;
+  const search = async () => {
+    n++;
+    if (n === 2) throw new Error('ECONNRESET');
+    return [{ id: `i${n}`, lat: n, lng: n, quality: 0.9, creator: null }];
+  };
+  const { map } = await buildMap({ id: 'x', nome: 'X', regions: [{ name: 'R', target: 3, sample: () => ({ lat: 0, lng: 0 }) }], minKm: 1 }, search, mulberry32(1));
+  expect(map.pontos).toHaveLength(3);
+});
+
+test('erro fatal (token inválido) interrompe o mapa', async () => {
+  const search = async () => { throw new FatalSearchError('HTTP 401'); };
+  await expect(buildMap({ id: 'x', nome: 'X', regions: [{ name: 'R', target: 3, sample: () => ({ lat: 0, lng: 0 }) }], minKm: 1 }, search, mulberry32(1))).rejects.toThrow(FatalSearchError);
+});
+
+test('mapa com menos de 100 pontos não é publicável', () => {
+  const pts = (n: number) => Array.from({ length: n }, (_, i) => ({ imageId: `${i}`, lat: 0, lng: 0, regiao: 'R' }));
+  expect(MIN_POINTS).toBe(100);
+  expect(isPublishable({ id: 'x', nome: 'X', tamanhoKm: 1, pontos: pts(99) })).toBe(false);
+  expect(isPublishable({ id: 'x', nome: 'X', tamanhoKm: 1, pontos: pts(100) })).toBe(true);
+});

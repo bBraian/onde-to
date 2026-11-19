@@ -32,13 +32,31 @@ export function parseImages(json: { data?: RawImage[] }): MlyImage[] {
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-/** Busca panoramas num bbox. Repete até 3 vezes em HTTP 429/5xx, com espera crescente. */
+/** Erro que não adianta repetir nem pular (token inválido ou sem permissão): aborta a geração do mapa. */
+export class FatalSearchError extends Error {
+  name = 'FatalSearchError';
+}
+
+const MAX_RETRIES = 3;
+
+/**
+ * Busca panoramas num bbox. Repete até 3 vezes em erro de rede, HTTP 429 e 5xx, com espera crescente.
+ * 401/403 lançam FatalSearchError; outros erros lançam Error comum (quem chama pode pular esse bbox).
+ */
 export async function searchPanos(bbox: BBox, token: string): Promise<MlyImage[]> {
   for (let attempt = 0; ; attempt++) {
-    const res = await fetch(imagesUrl(bbox, token));
+    let res: Response;
+    try {
+      res = await fetch(imagesUrl(bbox, token));
+    } catch (err) {
+      if (attempt >= MAX_RETRIES) throw err;
+      await sleep(1000 * 2 ** attempt);
+      continue;
+    }
     if (res.ok) return parseImages((await res.json()) as { data?: RawImage[] });
+    if (res.status === 401 || res.status === 403) throw new FatalSearchError(`Mapillary HTTP ${res.status}: ${await res.text()}`);
     const retriable = res.status === 429 || res.status >= 500;
-    if (!retriable || attempt >= 3) throw new Error(`Mapillary HTTP ${res.status}: ${await res.text()}`);
+    if (!retriable || attempt >= MAX_RETRIES) throw new Error(`Mapillary HTTP ${res.status}: ${await res.text()}`);
     await sleep(1000 * 2 ** attempt);
   }
 }

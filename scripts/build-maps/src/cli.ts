@@ -2,11 +2,10 @@ import { writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { mulberry32 } from '@onde-to/shared';
-import { buildMap } from './build';
+import { buildMap, isPublishable, MIN_POINTS } from './build';
 import { searchPanos } from './mapillary';
 import { loadSpec, MAP_IDS } from './regions';
 
-const MIN_POINTS = 100;
 const OUT_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', 'packages', 'shared', 'maps');
 
 async function main() {
@@ -22,15 +21,16 @@ async function main() {
     const target = spec.regions.reduce((s, r) => s + r.target, 0);
     console.log(`\n▶ ${spec.nome}: alvo ${target} pontos em ${spec.regions.length} regiões`);
     const { map, report } = await buildMap(spec, (bbox) => searchPanos(bbox, token), mulberry32(Date.now()), 20, 8);
-    writeFileSync(join(OUT_DIR, `${id}.json`), JSON.stringify(map) + '\n');
+    const publishable = isPublishable(map);
+    if (publishable) writeFileSync(join(OUT_DIR, `${id}.json`), JSON.stringify(map) + '\n');
     const short = Object.entries(report).filter(([, r]) => r.got < r.target);
-    console.log(`  ${map.pontos.length}/${target} pontos, tamanho ${map.tamanhoKm} km → maps/${id}.json`);
+    console.log(`  ${map.pontos.length}/${target} pontos, tamanho ${map.tamanhoKm} km${publishable ? ` → maps/${id}.json` : ' (não gravado)'}`);
     if (short.length) {
       console.log(`  Abaixo do alvo (${short.length} regiões):`);
       for (const [name, r] of short) console.log(`    ${name}: ${r.got}/${r.target}`);
     }
-    if (map.pontos.length < MIN_POINTS) {
-      console.error(`  ✖ ${id} ficou com menos de ${MIN_POINTS} pontos.`);
+    if (!publishable) {
+      console.error(`  ✖ ${id} ficou com menos de ${MIN_POINTS} pontos e não foi gravado.`);
       failed = true;
     }
   }

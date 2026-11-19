@@ -67,7 +67,46 @@ function polygonSampler(f: Feature): (rng: () => number) => LatLng {
 
 function areaRegions(features: Feature[], names: string[], total: number, opts: { min: number; cap?: number }): Region[] {
   const targets = allocateTargets(features.map((f) => turfArea(f as any)), total, opts);
-  return features.map((f, i) => ({ name: names[i], target: targets[i], sample: polygonSampler(f) }));
+  return features.map((f, i) => ({
+    name: names[i],
+    target: targets[i],
+    sample: polygonSampler(f),
+    contains: (p: LatLng) => booleanPointInPolygon([p.lng, p.lat], f as any),
+  }));
+}
+
+/** Nome do país em português (Natural Earth NAME_PT), com o nome em inglês como reserva. */
+export function countryName(props: Record<string, any>): string {
+  return props.NAME_PT || props.NAME;
+}
+
+/** Regiões do mapa Mundo: um país por região, sem a Antártida, alvo pela área. */
+export function countryRegions(countriesFc: { features: any[] }, total: number, opts: { min: number; cap?: number }): Region[] {
+  const features = (countriesFc.features as Feature[]).filter((f) => f.properties.NAME !== 'Antarctica');
+  return areaRegions(features, features.map((f) => countryName(f.properties)), total, opts);
+}
+
+/** Capitais nacionais do Natural Earth, com o país em português: "Berlin (Alemanha)". */
+export function capitalCenters(placesFc: { features: any[] }, countriesFc: { features: any[] }): { name: string; lat: number; lng: number }[] {
+  const ptByA3 = new Map<string, string>(countriesFc.features.map((f) => [f.properties.ADM0_A3, countryName(f.properties)]));
+  return placesFc.features
+    .filter((f) => f.properties.featurecla === 'Admin-0 capital')
+    .map((f) => ({
+      name: `${f.properties.name} (${ptByA3.get(f.properties.adm0_a3) ?? f.properties.adm0name})`,
+      lat: f.properties.latitude,
+      lng: f.properties.longitude,
+    }));
+}
+
+/** As capitais estão espalhadas pelo planeta (cruzando o antimeridiano): o tamanho é o do mapa-múndi. */
+export function capitaisMundoSpec(placesFc: { features: any[] }, countriesFc: { features: any[] }): MapSpec {
+  return {
+    id: 'capitais-mundo',
+    nome: 'Capitais do Mundo',
+    minKm: 0.5,
+    fixedSizeKm: WORLD_SIZE_KM,
+    regions: diskRegions(capitalCenters(placesFc, countriesFc), 3, 10),
+  };
 }
 
 function diskRegions(centers: { name: string; lat: number; lng: number }[], perCenter: number, radiusKm: number): Region[] {
@@ -92,25 +131,18 @@ export async function loadSpec(mapId: string): Promise<MapSpec> {
       return { id: 'capitais-br', nome: 'Capitais do Brasil', minKm: 0.5, regions: diskRegions(centers, 15, 10) };
     }
     case 'capitais-mundo': {
-      const fc = await cachedJson(NE_PLACES, 'ne-places.json');
-      const centers = (fc.features as any[])
-        .filter((f) => f.properties.featurecla === 'Admin-0 capital')
-        .map((f) => ({
-          name: `${f.properties.name} (${f.properties.adm0name})`,
-          lat: f.properties.latitude,
-          lng: f.properties.longitude,
-        }));
-      return { id: 'capitais-mundo', nome: 'Capitais do Mundo', minKm: 0.5, regions: diskRegions(centers, 3, 10) };
+      const places = await cachedJson(NE_PLACES, 'ne-places.json');
+      const countries = await cachedJson(NE_COUNTRIES, 'ne-countries.json');
+      return capitaisMundoSpec(places, countries);
     }
     case 'mundo': {
       const fc = await cachedJson(NE_COUNTRIES, 'ne-countries.json');
-      const features = (fc.features as Feature[]).filter((f) => f.properties.NAME !== 'Antarctica');
       return {
         id: 'mundo',
         nome: 'Mundo',
         minKm: 20,
         fixedSizeKm: WORLD_SIZE_KM,
-        regions: areaRegions(features, features.map((f) => f.properties.NAME), 1000, { min: 1, cap: 40 }),
+        regions: countryRegions(fc, 1000, { min: 1, cap: 40 }),
       };
     }
     default:

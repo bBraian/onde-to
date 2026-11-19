@@ -1,10 +1,13 @@
 import type { GameMap, LatLng, MapPoint } from '@onde-to/shared';
+import { FatalSearchError } from './mapillary';
 import { bboxAround, mapSizeKm, pickImage, tooClose, type BBox, type MlyImage } from './sample';
 
 export interface Region {
   name: string;
   target: number;
   sample(rng: () => number): LatLng;
+  /** Quando existe, a imagem precisa estar dentro da região (evita rótulo errado perto de fronteiras). */
+  contains?(p: LatLng): boolean;
 }
 
 export interface MapSpec {
@@ -16,6 +19,12 @@ export interface MapSpec {
 }
 
 export const MIN_QUALITY = 0.5;
+export const MIN_POINTS = 100;
+
+/** A spec exige pelo menos 100 pontos para um mapa ir para o jogo. */
+export function isPublishable(map: GameMap): boolean {
+  return map.pontos.length >= MIN_POINTS;
+}
 
 export async function buildMap(
   spec: MapSpec,
@@ -32,8 +41,15 @@ export async function buildMap(
     report[region.name] = { target: region.target, got: 0 };
     const maxAttempts = maxAttemptsPerPoint * region.target;
     for (let attempt = 0; attempt < maxAttempts && report[region.name].got < region.target; attempt++) {
-      const images = await search(bboxAround(region.sample(rng)));
-      const img = pickImage(images.filter((i) => !usedIds.has(i.id)), MIN_QUALITY, rng);
+      let images: MlyImage[];
+      try {
+        images = await search(bboxAround(region.sample(rng)));
+      } catch (err) {
+        if (err instanceof FatalSearchError) throw err;
+        continue; // falha passageira: conta como tentativa sem imagem
+      }
+      const candidates = images.filter((i) => !usedIds.has(i.id) && (!region.contains || region.contains(i)));
+      const img = pickImage(candidates, MIN_QUALITY, rng);
       if (!img || tooClose(img, pontos, spec.minKm)) continue;
       usedIds.add(img.id);
       pontos.push({ imageId: img.id, lat: img.lat, lng: img.lng, regiao: region.name, ...(img.creator ? { autor: img.creator } : {}) });

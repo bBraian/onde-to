@@ -22,3 +22,28 @@ test('imagesUrl monta a busca de panoramas', () => {
   expect(u.searchParams.get('fields')).toBe('id,computed_geometry,geometry,quality_score,creator');
   expect(u.searchParams.get('access_token')).toBe('TKN');
 });
+
+import { searchPanos, FatalSearchError } from '../src/mapillary';
+
+describe('searchPanos', () => {
+  beforeEach(() => { vi.useFakeTimers(); });
+  afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); });
+
+  test('repete depois de erro de rede', async () => {
+    const fetchMock = vi.fn()
+      .mockRejectedValueOnce(new TypeError('fetch failed'))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ data: [{ id: '1', geometry: { coordinates: [1, 2] } }] }), { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+    const p = searchPanos([0, 0, 0.01, 0.01], 'T');
+    await vi.runAllTimersAsync();
+    expect(await p).toEqual([{ id: '1', lat: 2, lng: 1, quality: null, creator: null }]);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  test('401 lança FatalSearchError sem repetir', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response('bad token', { status: 401 }));
+    vi.stubGlobal('fetch', fetchMock);
+    await expect(searchPanos([0, 0, 0.01, 0.01], 'T')).rejects.toBeInstanceOf(FatalSearchError);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+});
