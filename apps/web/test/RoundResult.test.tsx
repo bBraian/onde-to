@@ -1,6 +1,6 @@
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
-import { DEFAULT_SETTINGS, type RoomView } from '@onde-to/shared';
+import { DEFAULT_AVATAR, DEFAULT_SETTINGS, type RoomView } from '@onde-to/shared';
 
 vi.mock('../src/components/ResultMap', () => ({ ResultMap: () => null }));
 const { RoundResult } = await import('../src/pages/room/RoundResult');
@@ -10,8 +10,8 @@ const answer = { imageId: 'img-1', lat: -23.5, lng: -46.6, regiao: 'SP' };
 const view: RoomView = {
   code: 'K7QX', phase: 'result', settings: { ...DEFAULT_SETTINGS, mode: 'duel', mapId: 'teste' },
   players: [
-    { id: 'a', nick: 'Ana', team: 'A', isHost: true, connected: true, spectator: false, hasGuessed: false, total: 4413 },
-    { id: 'b', nick: 'Bia', team: 'B', isHost: false, connected: true, spectator: false, hasGuessed: false, total: 1887 },
+    { id: 'a', nick: 'Ana', avatar: DEFAULT_AVATAR, team: 'A', isHost: true, connected: true, spectator: false, hasGuessed: false, total: 4413 },
+    { id: 'b', nick: 'Bia', avatar: DEFAULT_AVATAR, team: 'B', isHost: false, connected: true, spectator: false, hasGuessed: false, total: 1887 },
   ],
   round: { number: 2, imageId: 'img-1', deadline: null },
   result: {
@@ -22,7 +22,7 @@ const view: RoomView = {
     ],
     duel: { teamScores: { A: 4413, B: 1887 }, damagedTeam: 'B', damage: 2526, hp: { A: 6000, B: 3474 }, multiplier: 1 },
   },
-  history: [], duelHp: { A: 6000, B: 3474 }, nextAt: null, winner: null, serverNow: 0,
+  history: [], duelHp: { A: 6000, B: 3474 }, nextAt: null, winner: null, serverNow: 0, provider: 'mapillary',
 };
 
 test('resultado do duelo mostra os pontos de cada time', async () => {

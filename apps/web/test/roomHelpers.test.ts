@@ -1,13 +1,13 @@
 import type { PlayerView, RoomView } from '@onde-to/shared';
-import { DEFAULT_SETTINGS } from '@onde-to/shared';
+import { DEFAULT_AVATAR, DEFAULT_SETTINGS } from '@onde-to/shared';
 import { canStart, playerColor, isLastRound } from '../src/pages/room/helpers';
 
 const p = (id: string, team: 'A' | 'B', extra: Partial<PlayerView> = {}): PlayerView => ({
-  id, nick: id, team, isHost: false, connected: true, spectator: false, hasGuessed: false, total: 0, ...extra,
+  id, nick: id, avatar: DEFAULT_AVATAR, team, isHost: false, connected: true, spectator: false, hasGuessed: false, total: 0, ...extra,
 });
 const view = (over: Partial<RoomView>): RoomView => ({
   code: 'K7QX', phase: 'lobby', settings: DEFAULT_SETTINGS, players: [], round: null, result: null, history: [],
-  duelHp: null, nextAt: null, winner: null, serverNow: 0, ...over,
+  duelHp: null, nextAt: null, winner: null, serverNow: 0, provider: 'mapillary', ...over,
 });
 
 test('canStart: duelo exige gente nos dois times', () => {

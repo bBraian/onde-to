@@ -1,70 +1,53 @@
-/* Identidade "mapa de campo" — aprovada em 2026-11-19 (mockup: claude.ai/artifact/T1UWzK7YVCViaNjZL4dbjh) */
+/* Identidade v2 "cartoon" — aprovada em 2026-11-19 (mockups: claude.ai/artifact/T1UWzK7YVCViaNjZL4dbjh, linha v2).
+   Só tema claro: a paleta foi feita para o fundo creme. */
 :root {
-  --font-display: 'Bricolage Grotesque', 'Inter', system-ui, sans-serif;
-  --font-body: 'Inter', system-ui, sans-serif;
+  color-scheme: light;
 
-  --paper: #F4F1E8;
-  --paper-2: #FBFAF6;
+  --font-display: 'Fredoka', 'Nunito', system-ui, sans-serif;
+  --font-body: 'Nunito', system-ui, sans-serif;
+
+  --paper: #FFF6E5;
+  --paper-2: #FFFBF2;
   --card: #FFFFFF;
-  --line: #DCD6C6;
-  --line-strong: #B9B29F;
   --ink: #17231E;
-  --ink-2: #4A5A52;
-  --ink-3: #56655D;
-  --on-ink: #F4F1E8;
-  --on-ink-2: #C9D3CC;
+  --ink-2: #3F4D46;
+  --ink-3: #4A5A52;
+  --line: #17231E;
+  --line-soft: #E8DCC4;
 
-  --green: #1F6B4F;
-  --green-dark: #164D39;
+  --green: #1A7A50;
+  --green-dark: #125C3C;
   --on-green: #FFFFFF;
-  --accent: #E2582A;
-  --warn: #F2B33D;
+  --accent: #FF6B35;
+  --yellow: #FFC93C;
+  --blue: #3A86FF;
+  --sky: #BDE7FF;
+  --danger: #E63946;
+  --pink: #FF8FAB;
+  --guessed: #2EC4B6;
 
-  --team-a: #B8461A;
-  --team-a-soft: #FBF1EC;
-  --team-a-bar: #E2582A;
-  --team-b: #2563C9;
-  --team-b-soft: #EEF3FC;
-  --team-b-bar: #4C86E8;
-  --guessed: #8BE0B5;
+  --team-a: #C2410C;
+  --team-a-soft: #FFE3D6;
+  --team-a-bar: #FF6B35;
+  --team-b: #1D4ED8;
+  --team-b-soft: #DCEBFF;
+  --team-b-bar: #3A86FF;
 
-  --water: #A9CBD6;
-  --land: #E9E2CC;
-  --street-sky: #6F8C9B;
-  --street-ground: #3B423D;
+  --water: #A9DDF5;
+  --land: #F5E7C4;
+  --street-sky: #8EC5E8;
+  --street-ground: #6F7A6C;
   --hud: #17231E;
 
-  --radius-s: 10px;
-  --radius-m: 14px;
-  --radius-l: 20px;
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 24px;
-  --space-6: 32px;
-}
+  --border: 3px solid var(--ink);
+  --shadow-card: 6px 6px 0 var(--ink);
+  --shadow-sm: 4px 4px 0 var(--ink);
+  --shadow-btn: 0 5px 0 var(--ink);
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) {
-    --paper: #111915;
-    --paper-2: #18221D;
-    --card: #1B2620;
-    --line: #2E3B34;
-    --line-strong: #46564D;
-    --ink: #EEF0EA;
-    --ink-2: #B5C1B9;
-    --ink-3: #A3B0A8;
-    --on-ink: #111915;
-    --on-ink-2: #2E3B34;
-    --green: #3FA27A;
-    --green-dark: #2E8A64;
-    --on-green: #0B1410;
-    --team-a: #F08A5D;
-    --team-a-soft: #2C1F18;
-    --team-b: #7FA8F0;
-    --team-b-soft: #18223A;
-    --land: #2A332C;
-    --water: #1E3640;
-  }
+  --radius-s: 12px;
+  --radius-m: 16px;
+  --radius-l: 24px;
+
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
 }
