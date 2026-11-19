@@ -1,6 +1,7 @@
 import type { LatLng } from './geo';
 import type { TeamId, DuelRoundOutcome } from './duel';
-import type { MapPoint } from './maps';
+import type { MapPoint, StreetProvider } from './maps';
+import type { Avatar } from './avatar';
 import type { RoomSettings } from './settings';
 
 export type Phase = 'lobby' | 'round' | 'result' | 'finished';
@@ -8,6 +9,7 @@ export type Phase = 'lobby' | 'round' | 'result' | 'finished';
 export interface PlayerView {
   id: string;
   nick: string;
+  avatar: Avatar;
   team: TeamId | null;
   isHost: boolean;
   connected: boolean;
@@ -42,6 +44,7 @@ export interface RoomView {
   nextAt: number | null;
   winner: { playerIds: string[] } | { team: TeamId } | null;
   serverNow: number;
+  provider: StreetProvider;
 }
 
 export type JoinAck =
@@ -49,8 +52,9 @@ export type JoinAck =
   | { ok: false; error: 'not_found' | 'full' | 'invalid_nick' };
 
 export interface ClientToServerEvents {
-  'room:create': (p: { nick: string; session: string }, ack: (r: JoinAck) => void) => void;
-  'room:join': (p: { code: string; nick: string; session: string }, ack: (r: JoinAck) => void) => void;
+  'room:create': (p: { nick: string; session: string; avatar?: Avatar }, ack: (r: JoinAck) => void) => void;
+  'room:join': (p: { code: string; nick: string; session: string; avatar?: Avatar }, ack: (r: JoinAck) => void) => void;
+  'room:avatar': (p: Avatar) => void;
   'room:leave': () => void;
   'room:settings': (p: Partial<RoomSettings>) => void;
   'room:team': (p: { playerId: string; team: TeamId }) => void;

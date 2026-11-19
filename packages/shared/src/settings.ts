@@ -1,5 +1,6 @@
 export type GameMode = 'classic' | 'duel';
 export type Movement = 'move' | 'no-move' | 'nmpz';
+export type Scoring = 'distance' | 'rounds';
 
 export interface RoomSettings {
   mapId: string;
@@ -12,6 +13,7 @@ export interface RoomSettings {
   duelMultiplierStartRound: number;
   duelMultiplierStep: number;
   autoAdvanceSec: number | null;
+  scoring: Scoring;
 }
 
 export const DEFAULT_SETTINGS: RoomSettings = {
@@ -25,10 +27,12 @@ export const DEFAULT_SETTINGS: RoomSettings = {
   duelMultiplierStartRound: 5,
   duelMultiplierStep: 0.5,
   autoAdvanceSec: 30,
+  scoring: 'distance',
 };
 
 const MODES: GameMode[] = ['classic', 'duel'];
 const MOVEMENTS: Movement[] = ['move', 'no-move', 'nmpz'];
+const SCORINGS: Scoring[] = ['distance', 'rounds'];
 
 const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
 const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
@@ -63,5 +67,6 @@ export function sanitizeSettings(
     duelMultiplierStartRound: num(i.duelMultiplierStartRound, base.duelMultiplierStartRound, 2, 10, true),
     duelMultiplierStep: num(i.duelMultiplierStep, base.duelMultiplierStep, 0.1, 1.0, false),
     autoAdvanceSec: nullableNum(i.autoAdvanceSec, base.autoAdvanceSec, 10, 120),
+    scoring: SCORINGS.includes(i.scoring as Scoring) ? (i.scoring as Scoring) : base.scoring,
   };
 }

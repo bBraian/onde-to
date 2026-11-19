@@ -4,6 +4,7 @@ test('defaults da spec', () => {
   expect(DEFAULT_SETTINGS).toEqual({
     mapId: 'brasil', mode: 'classic', rounds: 5, roundTimeSec: 120, movement: 'move',
     duelStartHp: 6000, duelGuessCountdownSec: 15, duelMultiplierStartRound: 5, duelMultiplierStep: 0.5, autoAdvanceSec: 30,
+    scoring: 'distance',
   });
 });
 
@@ -34,4 +35,9 @@ test('sanitizeSettings ignora tipos errados', () => {
   expect(s.rounds).toBe(5);
   expect(s.roundTimeSec).toBe(120);
   expect(s.autoAdvanceSec).toBe(30);
+});
+
+test('scoring é sanitizado', () => {
+  expect(sanitizeSettings({ scoring: 'rounds' }, DEFAULT_SETTINGS, ['brasil']).scoring).toBe('rounds');
+  expect(sanitizeSettings({ scoring: 'x' as any }, DEFAULT_SETTINGS, ['brasil']).scoring).toBe('distance');
 });

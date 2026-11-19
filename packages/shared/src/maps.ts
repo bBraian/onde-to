@@ -6,11 +6,15 @@ export interface MapPoint extends LatLng {
   autor?: string;
 }
 
+export type StreetProvider = 'mapillary' | 'google';
+
 export interface GameMap {
   id: string;
   nome: string;
   tamanhoKm: number;
   pontos: MapPoint[];
+  /** Provedor das imagens (ausente = mapillary). `imageId` é o id do lugar nesse provedor. */
+  provider?: StreetProvider;
 }
 
 export const MAP_CATALOG: { id: string; nome: string }[] = [

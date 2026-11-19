@@ -25,3 +25,13 @@ test('scoreGuess com palpite devolve distância e pontos', () => {
   expect(r.distanceKm).toBeCloseTo(360.75, 1);
   expect(r.score).toBe(scoreFor(r.distanceKm!, 4000));
 });
+
+import { roundPoints } from '../src/index';
+
+test('roundPoints: o mais próximo faz 1; empate até 1 m; sem palpite faz 0', () => {
+  expect(roundPoints([{ playerId: 'a', distanceKm: 10 }, { playerId: 'b', distanceKm: 3 }, { playerId: 'c', distanceKm: null }]))
+    .toEqual({ a: 0, b: 1, c: 0 });
+  expect(roundPoints([{ playerId: 'a', distanceKm: 3.0005 }, { playerId: 'b', distanceKm: 3 }])).toEqual({ a: 1, b: 1 });
+  expect(roundPoints([{ playerId: 'a', distanceKm: 3.002 }, { playerId: 'b', distanceKm: 3 }])).toEqual({ a: 0, b: 1 });
+  expect(roundPoints([{ playerId: 'a', distanceKm: null }])).toEqual({ a: 0 });
+});

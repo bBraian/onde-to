@@ -10,6 +10,18 @@ export function scoreFor(distanceKm: number, mapSizeKm: number): number {
   return Math.round(MAX_SCORE * Math.exp((-10 * distanceKm) / mapSizeKm));
 }
 
+/** Tolerância de empate na pontuação "Rodada": 1 m. */
+export const ROUND_TIE_KM = 0.001;
+
+/** Pontuação "Rodada": quem tem a menor distância faz 1 ponto (empate até 1 m); sem palpite faz 0. */
+export function roundPoints(results: { playerId: string; distanceKm: number | null }[]): Record<string, number> {
+  const out: Record<string, number> = {};
+  const dists = results.map((r) => r.distanceKm).filter((d): d is number => d !== null);
+  const best = dists.length ? Math.min(...dists) : null;
+  for (const r of results) out[r.playerId] = best !== null && r.distanceKm !== null && r.distanceKm - best <= ROUND_TIE_KM ? 1 : 0;
+  return out;
+}
+
 export function scoreGuess(
   guess: LatLng | null,
   answer: LatLng,
