@@ -7,7 +7,9 @@ class FakePano {
   status = 'OK';
   pano = '';
   options: Record<string, unknown>;
-  constructor(_el: HTMLElement, opts: Record<string, unknown>) {
+  attached: boolean;
+  constructor(el: HTMLElement, opts: Record<string, unknown>) {
+    this.attached = el.isConnected;
     this.options = opts;
     this.pano = String(opts.pano ?? '');
     created.push(this);
@@ -59,6 +61,7 @@ test('reaproveita um panorama só entre montagens e troca o lugar com setPano', 
   await flush();
   expect(created).toHaveLength(1);
   expect(created[0].pano).toBe('P2');
+  expect(created[0].attached).toBe(true); // construído já dentro da página (senão nasce com 0×0)
 });
 
 test('status diferente de OK mostra "Imagem indisponível" e chama onError uma vez', async () => {

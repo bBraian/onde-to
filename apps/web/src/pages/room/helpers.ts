@@ -30,7 +30,7 @@ export function isLastRound(v: RoomView): boolean {
 export const nickOf = (v: RoomView, id: string) => v.players.find((p) => p.id === id)?.nick ?? '—';
 
 /** O servidor escolhe os lugares de um provedor; o site precisa mostrar as imagens do mesmo. */
-export const providerMismatch = (v: RoomView, local: StreetProvider) => v.provider !== local;
+export const providerMismatch = (v: RoomView, local: StreetProvider) => (v.provider ?? 'mapillary') !== local;
 
 export const avatarOf = (v: RoomView, id: string) => v.players.find((p) => p.id === id)?.avatar;
 

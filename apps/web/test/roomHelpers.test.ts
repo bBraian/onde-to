@@ -41,3 +41,8 @@ test('providerMismatch compara o provedor do servidor com o do site', () => {
   expect(providerMismatch(view({ provider: 'google' }), 'mapillary')).toBe(true);
   expect(providerMismatch(view({ provider: 'mapillary' }), 'mapillary')).toBe(false);
 });
+
+test('providerMismatch trata servidor sem provedor (v1) como mapillary', () => {
+  expect(providerMismatch(view({ provider: undefined as never }), 'mapillary')).toBe(false);
+  expect(providerMismatch(view({ provider: undefined as never }), 'google')).toBe(true);
+});

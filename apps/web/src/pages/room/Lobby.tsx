@@ -1,8 +1,10 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router';
-import type { GameMode, Movement, PlayerView, RoomSettings, RoomView, Scoring, TeamId } from '@onde-to/shared';
+import { DEFAULT_AVATAR, type Avatar, type GameMode, type Movement, type PlayerView, type RoomSettings, type RoomView, type Scoring, type TeamId } from '@onde-to/shared';
 import { Logo } from '../../components/Logo';
 import { PinAvatar } from '../../avatar/PinAvatar';
+import { setAvatar } from '../../avatar/storage';
+import { setNick } from '../../lib/session';
+import { AvatarEditorPanel, cleanNick } from '../AvatarEditor';
 import { availableMaps } from '../../game/loadMap';
 import type { Send } from '../../lib/socket';
 import { canStart, isDuel, TEAM_NAME } from './helpers';
@@ -21,11 +23,26 @@ const MOVEMENTS: { id: Movement; label: string }[] = [
 ];
 
 export function Lobby({ view, me, send, onLeave }: Props) {
-  const navigate = useNavigate();
   const host = view.players.find((p) => p.isHost);
   const iAmHost = host?.id === me;
   const duel = isDuel(view);
   const [copied, setCopied] = useState(false);
+  const self = view.players.find((p) => p.id === me);
+  // Edição do alfinete num modal: sair da página derrubaria a conexão (o host perde o papel em 30 s).
+  const [editing, setEditing] = useState<{ avatar: Avatar; nick: string } | null>(null);
+  const saveEdit = () => {
+    if (!editing) return;
+    const nick = cleanNick(editing.nick);
+    if (!nick) return;
+    setAvatar(editing.avatar);
+    setNick(nick);
+    send('room:avatar', editing.avatar);
+    if (nick !== self?.nick) send('room:nick', nick);
+    setEditing(null);
+  };
+  const closeOnEscape = (ev: React.KeyboardEvent) => {
+    if (ev.key === 'Escape') setEditing(null);
+  };
   const s = view.settings;
   const set = (patch: Partial<RoomSettings>) => send('room:settings', patch);
 
@@ -94,7 +111,7 @@ export function Lobby({ view, me, send, onLeave }: Props) {
         <section className="lobby-players">
           <div className="lobby-head">
             <h1>Quem tá na sala <span className="small muted">{view.players.length} de 8</span></h1>
-            <button type="button" className="btn btn-sm btn-yellow" onClick={() => navigate(`/avatar?volta=/sala/${view.code}`)}>
+            <button type="button" className="btn btn-sm btn-yellow" onClick={() => setEditing({ avatar: self?.avatar ?? DEFAULT_AVATAR, nick: self?.nick ?? '' })}>
               Editar meu alfinete
             </button>
           </div>
@@ -185,6 +202,22 @@ export function Lobby({ view, me, send, onLeave }: Props) {
           {iAmHost && duel && !canStart(view) && <p className="small center-text">Precisa de pelo menos uma pessoa conectada em cada time.</p>}
         </aside>
       </main>
+
+      {editing && (
+        <div className="modal-backdrop" role="dialog" aria-modal="true" aria-label="Editar meu alfinete" onKeyDown={closeOnEscape}>
+          <div className="modal pop">
+            <AvatarEditorPanel value={editing.avatar} nick={editing.nick} onChange={(avatar, nick) => setEditing({ avatar, nick })} />
+            <div className="editor-actions">
+              <button type="button" className="btn btn-outline btn-lg" onClick={() => setEditing(null)}>
+                Cancelar
+              </button>
+              <button type="button" className="btn btn-primary btn-lg" disabled={!cleanNick(editing.nick)} onClick={saveEdit}>
+                Salvar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

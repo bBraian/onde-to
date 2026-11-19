@@ -3,6 +3,7 @@ import type { RoomView } from '@onde-to/shared';
 import { Logo } from '../../components/Logo';
 import { HpBars } from '../../components/HpBars';
 import { PinAvatar } from '../../avatar/PinAvatar';
+import { TeamTag } from '../../components/TeamTag';
 import { formatPoints } from '../../lib/format';
 import { celebrate } from '../../lib/motion';
 import type { Send } from '../../lib/socket';
@@ -53,6 +54,7 @@ export function Finished({ view, me, send, onLeave }: Props) {
             <li key={p.id} className={`rank-row pop${winnerIds.includes(p.id) ? ' rank-first' : ''}`} style={{ animationDelay: `${i * 60}ms` }}>
               <span className="rank-n">{i + 1}</span>
               <PinAvatar avatar={p.avatar} size={40} title="" />
+              {duel && p.team && <TeamTag team={p.team} />}
               <span className="rank-name">{p.nick} {p.id === me && <span className="muted">(você)</span>}</span>
               {!duel && <span className="rank-score">{byRounds ? `${p.total} ${p.total === 1 ? 'ponto' : 'pontos'}` : formatPoints(p.total)}</span>}
             </li>

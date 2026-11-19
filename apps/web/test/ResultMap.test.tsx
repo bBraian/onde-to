@@ -2,6 +2,7 @@ import { act } from 'react';
 import { createRoot } from 'react-dom/client';
 
 const created: string[] = [];
+const markerEls: HTMLElement[] = [];
 vi.mock('../src/components/maplibre', () => {
   class Map {
     constructor() { created.push('map'); }
@@ -14,6 +15,7 @@ vi.mock('../src/components/maplibre', () => {
     remove() {}
   }
   class Marker {
+    constructor(opts?: { element?: HTMLElement }) { if (opts?.element) markerEls.push(opts.element); }
     setLngLat() { return this; }
     addTo() { return this; }
   }
@@ -39,5 +41,16 @@ test('mesmo resultado em objetos novos não recria o mapa', async () => {
   expect(created).toHaveLength(1);
   await act(async () => { root.render(<ResultMap answer={{ ...answer(), imageId: 'img-2' }} guesses={guesses()} />); });
   expect(created).toHaveLength(2);
+  root.unmount();
+});
+
+test('no duelo o pino do palpite leva o time', async () => {
+  markerEls.length = 0;
+  const el = document.createElement('div');
+  const root = createRoot(el);
+  await act(async () => {
+    root.render(<ResultMap answer={answer()} guesses={[{ ...guesses()[0], team: 'B' }]} />);
+  });
+  expect(markerEls.some((m) => m.dataset.team === 'B')).toBe(true);
   root.unmount();
 });

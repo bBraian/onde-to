@@ -16,7 +16,7 @@ let shared: Promise<Shared> | null = null;
 let configuredKey: string | null = null;
 let statusHandler: ((status: string) => void) | null = null;
 
-function getShared(key: string, movement: Movement, panoId: string): Promise<Shared> {
+function getShared(key: string, movement: Movement, panoId: string, mount: HTMLElement): Promise<Shared> {
   if (configuredKey === null) {
     setOptions({ key, language: 'pt-BR', region: 'BR' });
     configuredKey = key;
@@ -26,6 +26,8 @@ function getShared(key: string, movement: Movement, panoId: string): Promise<Sha
       .then(({ StreetViewPanorama }) => {
         const host = document.createElement('div');
         host.className = 'street-canvas';
+        // constrói já encaixado na página: um panorama criado num <div> solto nasce com 0×0
+        mount.prepend(host);
         const pano = new StreetViewPanorama(host, { ...googlePanoramaOptions(movement), pano: panoId, pov: { heading: 0, pitch: 0 }, zoom: 0 });
         pano.addListener('status_changed', () => statusHandler?.(String(pano.getStatus())));
         return { host, pano };
@@ -64,7 +66,7 @@ export function GoogleViewer({ panoId, movement, onError }: Props) {
     statusHandler = (status) => {
       if (status !== 'OK') fail();
     };
-    getShared(key, movement, panoId)
+    getShared(key, movement, panoId, container.current!)
       .then((s) => {
         if (!active || !container.current) return;
         instance.current = s;

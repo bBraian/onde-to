@@ -7,6 +7,10 @@ import { AVATAR_COLORS } from '@onde-to/shared';
 export const EASE_OUT = [0.23, 1, 0.32, 1] as const;
 export const EASE_IN_OUT = [0.77, 0, 0.175, 1] as const;
 
+/** Troca de tela: entrada 200 ms + saída 50 ms (a spec pede no máximo 250 ms no total). */
+export const ROUTE_FADE_IN_S = 0.2;
+export const ROUTE_FADE_OUT_S = 0.05;
+
 export function prefersReducedMotion(): boolean {
   try {
     return typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;

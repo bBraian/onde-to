@@ -7,6 +7,7 @@ import { Attribution } from '../../components/Attribution';
 import { HpBars } from '../../components/HpBars';
 import { initialView } from '../../components/mapStyle';
 import { PinAvatar } from '../../avatar/PinAvatar';
+import { TeamTag } from '../../components/TeamTag';
 import type { Send } from '../../lib/socket';
 import { activePlayers, isDuel } from './helpers';
 
@@ -55,6 +56,7 @@ export function RoundView({ view, me, offsetMs, send }: Props) {
           {activePlayers(view).map((p) => (
             <li key={p.id} data-done={p.hasGuessed ? '' : undefined} title={p.nick}>
               <PinAvatar avatar={p.avatar} size={30} title="" />
+              {duel && p.team && <TeamTag team={p.team} />}
               <span className="sr-only">{p.hasGuessed ? `${p.nick} já chutou` : `${p.nick} ainda não chutou`}</span>
             </li>
           ))}

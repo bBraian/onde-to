@@ -4,6 +4,7 @@ import { ResultMap, type ResultGuess } from '../../components/ResultMap';
 import { Attribution } from '../../components/Attribution';
 import { HpBars } from '../../components/HpBars';
 import { PinAvatar } from '../../avatar/PinAvatar';
+import { TeamTag } from '../../components/TeamTag';
 import { mapName } from '../../game/loadMap';
 import { formatKm, formatPoints } from '../../lib/format';
 import { celebrate, useCountUp } from '../../lib/motion';
@@ -31,7 +32,12 @@ export function RoundResult({ view, me, offsetMs, send }: Props) {
   const shown = useCountUp(mine?.score ?? 0);
   const guesses: ResultGuess[] = useMemo(
     () =>
-      result.guesses.map((g) => ({ guess: g.guess, label: nickOf(view, g.playerId), avatar: avatarOf(view, g.playerId) ?? DEFAULT_AVATAR })),
+      result.guesses.map((g) => ({
+        guess: g.guess,
+        label: nickOf(view, g.playerId),
+        avatar: avatarOf(view, g.playerId) ?? DEFAULT_AVATAR,
+        team: duel ? (view.players.find((p) => p.id === g.playerId)?.team ?? null) : null,
+      })),
     // o resultado de uma rodada não muda; refazer só quando a rodada mudar
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [result.round, result.answer.imageId],
@@ -59,10 +65,17 @@ export function RoundResult({ view, me, offsetMs, send }: Props) {
           <Attribution autor={result.answer.autor} className="attribution muted" />
         </div>
 
-        {mine && (
-          <div className="score-sticker pop" aria-live="polite">
+        {mine && points && (
+          <div className="score-sticker pop">
+            <span>{mine.guess ? `Você errou por ${formatKm(mine.distanceKm!)} · ${formatPoints(mine.score)} de distância` : 'Você não chutou'}</span>
+            <strong>{points[me] > 0 ? '+1 ponto' : 'Sem ponto'}</strong>
+          </div>
+        )}
+        {mine && !points && (
+          <div className="score-sticker pop">
             <span>{mine.guess ? `Você errou por ${formatKm(mine.distanceKm!)}` : 'Você não chutou'}</span>
-            <strong>+{formatPoints(shown)}</strong>
+            <strong aria-hidden="true">+{formatPoints(shown)}</strong>
+            <span className="sr-only">+{formatPoints(mine.score)} pontos</span>
           </div>
         )}
 
@@ -78,7 +91,12 @@ export function RoundResult({ view, me, offsetMs, send }: Props) {
                 ? `${TEAM_NAME[result.duel.damagedTeam]} perdeu ${formatPoints(result.duel.damage)} de vida${result.duel.multiplier > 1 ? ` (${String(result.duel.multiplier).replace('.', ',')}×)` : ''}`
                 : 'Empate, ninguém perdeu vida'}
             </p>
-            <HpBars hp={view.duelHp} startHp={view.settings.duelStartHp} shakeTeam={result.duel.damagedTeam} />
+            <HpBars
+              hp={view.duelHp}
+              startHp={view.settings.duelStartHp}
+              from={result.duel.damagedTeam ? { ...view.duelHp, [result.duel.damagedTeam]: Math.min(view.settings.duelStartHp, view.duelHp[result.duel.damagedTeam] + result.duel.damage) } : undefined}
+              shakeTeam={result.duel.damagedTeam}
+            />
           </div>
         )}
 
@@ -87,12 +105,16 @@ export function RoundResult({ view, me, offsetMs, send }: Props) {
             <li key={g.playerId} className={`rank-row${i === 0 && g.guess ? ' rank-first' : ''}`}>
               <span className="rank-n">{i + 1}</span>
               <PinAvatar avatar={avatarOf(view, g.playerId) ?? DEFAULT_AVATAR} size={32} title="" />
+              {duel && <TeamTag team={view.players.find((p) => p.id === g.playerId)?.team ?? 'A'} />}
               <span className="rank-name">
                 {nickOf(view, g.playerId)} {g.playerId === me && <span className="muted">(você)</span>}
               </span>
               <span className="muted tabular">{g.distanceKm !== null ? formatKm(g.distanceKm) : 'sem palpite'}</span>
               {points ? (
-                points[g.playerId] > 0 ? <span className="rank-plus">+1 ponto</span> : <span className="rank-score">0</span>
+                <>
+                  <span className="muted small tabular">{formatPoints(g.score)}</span>
+                  {points[g.playerId] > 0 ? <span className="rank-plus">+1 ponto</span> : <span className="rank-score">0</span>}
+                </>
               ) : (
                 <span className="rank-score">{formatPoints(g.score)}</span>
               )}

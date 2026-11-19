@@ -28,6 +28,8 @@ export interface RoomDeps {
   provider: StreetProvider;
 }
 
+import { sanitizeNick } from './codes';
+
 export const MAX_PLAYERS = 8;
 export const HOST_GRACE_MS = 30_000;
 export const LOBBY_DROP_MS = 60_000;
@@ -121,6 +123,17 @@ export class Room {
     const p = this.player(playerId);
     if (!p) return;
     p.avatar = sanitizeAvatar(avatar);
+    this.changed();
+  }
+
+  /** Troca de apelido no lobby (sanitizado e sem repetir o dos outros). */
+  setNick(playerId: string, nick: unknown): void {
+    const p = this.player(playerId);
+    if (!p || this.phase !== 'lobby') return;
+    const others = this.players.filter((x) => x.id !== playerId).map((x) => x.nick);
+    const clean = sanitizeNick(String(nick ?? ''), others);
+    if (!clean || clean === p.nick) return;
+    p.nick = clean;
     this.changed();
   }
 

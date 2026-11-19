@@ -51,5 +51,17 @@ test('clássico com pontuação por rodada marca +1 ponto para o mais próximo',
   expect(rows[0]).toContain('Ana');
   expect(rows[0]).toContain('+1 ponto');
   expect(rows[1]).not.toContain('+1');
+  expect(rows[1]).toContain('1.887'); // pontos de distância continuam aparecendo como informação
+  expect(el.querySelector('.score-sticker')?.textContent).toContain('ponto');
+  root.unmount();
+});
+
+test('no duelo cada linha mostra o time do jogador', async () => {
+  const el = document.createElement('div');
+  const root = createRoot(el);
+  await act(async () => { root.render(<RoundResult view={view} me="a" offsetMs={0} send={() => {}} />); });
+  const rows = Array.from(el.querySelectorAll('[data-testid="round-table"] li'));
+  expect(rows[0].querySelector('[data-team="A"]')).not.toBeNull();
+  expect(rows[1].querySelector('[data-team="B"]')).not.toBeNull();
   root.unmount();
 });

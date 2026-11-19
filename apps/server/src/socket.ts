@@ -71,6 +71,7 @@ export function attachSocket(io: IO, manager: RoomManager): void {
       c.room.removePlayer(c.playerId);
     }));
 
+    socket.on('room:nick', safe((n) => { const c = ctx(); c?.room.setNick(c.playerId, n); }));
     socket.on('room:avatar', safe((p) => { const c = ctx(); c?.room.setAvatar(c.playerId, p); }));
     socket.on('room:settings', safe((p) => { const c = ctx(); c?.room.updateSettings(c.playerId, p ?? {}); }));
     socket.on('room:team', safe((p) => { const c = ctx(); if (c && p) c.room.setTeam(c.playerId, String(p.playerId), p.team); }));

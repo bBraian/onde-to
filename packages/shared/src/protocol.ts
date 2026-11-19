@@ -55,6 +55,7 @@ export interface ClientToServerEvents {
   'room:create': (p: { nick: string; session: string; avatar?: Avatar }, ack: (r: JoinAck) => void) => void;
   'room:join': (p: { code: string; nick: string; session: string; avatar?: Avatar }, ack: (r: JoinAck) => void) => void;
   'room:avatar': (p: Avatar) => void;
+  'room:nick': (nick: string) => void;
   'room:leave': () => void;
   'room:settings': (p: Partial<RoomSettings>) => void;
   'room:team': (p: { playerId: string; team: TeamId }) => void;

@@ -47,3 +47,8 @@ test('celebrate respeita movimento reduzido', () => {
   celebrate('perfect');
   expect(confettiMock).toHaveBeenCalled();
 });
+
+import { ROUTE_FADE_IN_S, ROUTE_FADE_OUT_S } from '../src/lib/motion';
+test('troca de tela cabe em 250 ms (saída + entrada)', () => {
+  expect(ROUTE_FADE_IN_S + ROUTE_FADE_OUT_S).toBeLessThanOrEqual(0.25);
+});

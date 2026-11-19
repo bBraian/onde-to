@@ -45,3 +45,16 @@ test('view informa o provedor', () => {
   const r = new Room('ABCD', { loadMap: () => testMap, allowedMapIds: ['teste'], rng: mulberry32(1), onChange: () => {}, provider: 'google' });
   expect(r.view().provider).toBe('google');
 });
+
+test('setNick troca o apelido no lobby, evita repetido e é ignorado durante a partida', () => {
+  const r = room(); const ana = join(r, 'Ana'); join(r, 'Bia');
+  r.setNick(ana, '  Aninha  ');
+  expect(r.view().players[0].nick).toBe('Aninha');
+  r.setNick(ana, 'bia');
+  expect(r.view().players[0].nick).toBe('bia (2)');
+  r.setNick(ana, '   ');
+  expect(r.view().players[0].nick).toBe('bia (2)');
+  r.start(ana);
+  r.setNick(ana, 'Outro');
+  expect(r.view().players[0].nick).toBe('bia (2)');
+});

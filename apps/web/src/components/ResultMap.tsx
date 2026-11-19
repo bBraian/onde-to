@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react';
-import type { Avatar, LatLng, MapPoint } from '@onde-to/shared';
+import type { Avatar, LatLng, MapPoint, TeamId } from '@onde-to/shared';
 import { LngLatBounds, Map as MlMap, Marker } from './maplibre';
 import { pinSvg } from '../avatar/pinSvg';
 import { MAP_STYLE, toLngLat } from './mapStyle';
@@ -8,6 +8,8 @@ export interface ResultGuess {
   guess: LatLng | null;
   label: string;
   avatar: Avatar;
+  /** No Duelo: o time do jogador (anel colorido sob o pino). */
+  team?: TeamId | null;
 }
 
 const PIN_SIZE = 38;
@@ -37,6 +39,7 @@ function avatarElement(g: ResultGuess, i: number): HTMLElement {
   el.className = 'map-avatar';
   el.title = g.label;
   el.dataset.resultPin = '';
+  if (g.team) el.dataset.team = g.team;
   const inner = animated('drop', pinSvg(g.avatar, PIN_SIZE));
   inner.style.animationDelay = `${200 + i * STAGGER_MS}ms`;
   el.append(inner);

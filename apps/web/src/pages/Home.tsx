@@ -4,6 +4,7 @@ import { Logo } from '../components/Logo';
 import { PinAvatar } from '../avatar/PinAvatar';
 import { getAvatar } from '../avatar/storage';
 import { getNick } from '../lib/session';
+import { config } from '../lib/config';
 
 export const normalizeCode = (input: string) => input.toUpperCase().replace(/[^A-Z0-9]/g, '');
 
@@ -87,7 +88,13 @@ export function Home() {
 
       <footer className="home-footer">
         <span>
-          Fotos: <a href="https://www.mapillary.com" target="_blank" rel="noreferrer">© Mapillary</a> · Mapa: © OpenStreetMap
+          Fotos:{' '}
+          {config.streetProvider === 'google' ? (
+            'Google Street View'
+          ) : (
+            <a href="https://www.mapillary.com" target="_blank" rel="noreferrer">© Mapillary</a>
+          )}{' '}
+          · Mapa: © OpenStreetMap
         </span>
         <span>Feito pra jogar com os amigos</span>
       </footer>

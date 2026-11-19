@@ -4,6 +4,7 @@ import { Home } from './pages/Home';
 import { Local } from './pages/Local';
 import { Room } from './pages/Room';
 import { AvatarEditor } from './pages/AvatarEditor';
+import { EASE_OUT, ROUTE_FADE_IN_S, ROUTE_FADE_OUT_S } from './lib/motion';
 
 /**
  * Troca de tela com esmaecimento curto (200 ms). Só opacidade: um transform no contêiner
@@ -15,7 +16,12 @@ function AnimatedRoutes() {
   const section = `/${location.pathname.split('/')[1] ?? ''}`;
   return (
     <AnimatePresence mode="wait" initial={false}>
-      <motion.div key={section} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}>
+      <motion.div
+        key={section}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1, transition: { duration: ROUTE_FADE_IN_S, ease: EASE_OUT } }}
+        exit={{ opacity: 0, transition: { duration: ROUTE_FADE_OUT_S } }}
+      >
         <Routes location={location}>
           <Route path="/" element={<Home />} />
           <Route path="/avatar" element={<AvatarEditor />} />
