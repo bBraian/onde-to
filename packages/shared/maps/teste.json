@@ -1,0 +1,77 @@
+{
+  "id": "teste",
+  "nome": "Teste",
+  "tamanhoKm": 4000,
+  "pontos": [
+    {
+      "imageId": "fake-1",
+      "lat": -3.119,
+      "lng": -60.0217,
+      "regiao": "Manaus",
+      "autor": "teste"
+    },
+    {
+      "imageId": "fake-2",
+      "lat": -1.4558,
+      "lng": -48.4902,
+      "regiao": "Belém",
+      "autor": "teste"
+    },
+    {
+      "imageId": "fake-3",
+      "lat": -3.7319,
+      "lng": -38.5267,
+      "regiao": "Fortaleza",
+      "autor": "teste"
+    },
+    {
+      "imageId": "fake-4",
+      "lat": -8.0476,
+      "lng": -34.877,
+      "regiao": "Recife",
+      "autor": "teste"
+    },
+    {
+      "imageId": "fake-5",
+      "lat": -12.9777,
+      "lng": -38.5016,
+      "regiao": "Salvador",
+      "autor": "teste"
+    },
+    {
+      "imageId": "fake-6",
+      "lat": -15.7939,
+      "lng": -47.8828,
+      "regiao": "Brasília",
+      "autor": "teste"
+    },
+    {
+      "imageId": "fake-7",
+      "lat": -16.6869,
+      "lng": -49.2648,
+      "regiao": "Goiânia",
+      "autor": "teste"
+    },
+    {
+      "imageId": "fake-8",
+      "lat": -23.5505,
+      "lng": -46.6333,
+      "regiao": "São Paulo",
+      "autor": "teste"
+    },
+    {
+      "imageId": "fake-9",
+      "lat": -25.4284,
+      "lng": -49.2733,
+      "regiao": "Curitiba",
+      "autor": "teste"
+    },
+    {
+      "imageId": "fake-10",
+      "lat": -30.0346,
+      "lng": -51.2177,
+      "regiao": "Porto Alegre",
+      "autor": "teste"
+    }
+  ]
+}
