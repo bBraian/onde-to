@@ -1,18 +1,12 @@
 import { Link } from 'react-router';
+import { PinAvatar } from '../avatar/PinAvatar';
 
-export function PinIcon({ size = 28, color = 'var(--accent)' }: { size?: number; color?: string }) {
-  return (
-    <svg aria-hidden="true" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z" />
-      <circle cx="12" cy="9.5" r="2.6" />
-    </svg>
-  );
-}
+const LOGO_AVATAR = { color: '#FF6B35', eyes: 'feliz', mouth: 'sorriso', acc: 'nenhum' } as const;
 
-export function Logo({ size = 26 }: { size?: number }) {
+export function Logo({ size = 30 }: { size?: number }) {
   return (
     <Link to="/" className="logo" aria-label="Onde Tô? — início">
-      <PinIcon size={size + 8} />
+      <PinAvatar avatar={LOGO_AVATAR} size={size + 10} title="" />
       <span style={{ fontSize: size }}>Onde Tô?</span>
     </Link>
   );

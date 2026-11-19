@@ -7,7 +7,7 @@ test('treino: uma rodada até o resumo, com recorde', async ({ page }) => {
   await page.route('https://fonts.googleapis.com/**', (r) => r.fulfill({ contentType: 'text/css', body: '' }));
 
   await page.goto('/');
-  await page.getByRole('button', { name: 'Treinar' }).click();
+  await page.getByRole('button', { name: 'Jogar aqui' }).click();
   await page.getByLabel('Mapa').selectOption('teste');
   await page.getByLabel('Rodadas').selectOption('3');
   await page.getByRole('button', { name: 'Começar' }).click();
