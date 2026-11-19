@@ -1,6 +1,8 @@
 import {
   createDeck,
   DEFAULT_SETTINGS,
+  duelMultiplier,
+  resolveDuelRound,
   sanitizeSettings,
   scoreGuess,
   type GameMap,
@@ -22,6 +24,8 @@ export interface RoomDeps {
 }
 
 export const MAX_PLAYERS = 8;
+export const HOST_GRACE_MS = 30_000;
+export const LOBBY_DROP_MS = 60_000;
 
 interface Player {
   id: string;
@@ -64,6 +68,9 @@ export class Room {
   private winner: RoomView['winner'] = null;
   private roundTimer: ReturnType<typeof setTimeout> | null = null;
   private nextTimer: ReturnType<typeof setTimeout> | null = null;
+  private hostTimer: ReturnType<typeof setTimeout> | null = null;
+  private dropTimers = new Map<string, ReturnType<typeof setTimeout>>();
+  private duelHp: Record<TeamId, number> | null = null;
   private seq = 0;
 
   constructor(code: string, private readonly deps: RoomDeps) {
@@ -79,6 +86,7 @@ export class Room {
     const existing = this.players.find((p) => p.session === session);
     if (existing) {
       existing.connected = true;
+      this.cancelPresenceTimers(existing.id);
       this.changed();
       return { playerId: existing.id };
     }
@@ -87,7 +95,7 @@ export class Room {
       id: `p${++this.seq}`,
       session,
       nick,
-      team: null,
+      team: this.smallerTeam(),
       connected: true,
       spectator: this.phase !== 'lobby',
       total: 0,
@@ -106,6 +114,16 @@ export class Room {
     const p = this.player(playerId);
     if (!p || p.connected === connected) return;
     p.connected = connected;
+    if (connected) {
+      this.cancelPresenceTimers(playerId);
+    } else {
+      if (this.isHost(playerId)) {
+        this.hostTimer = setTimeout(() => this.transferHost(playerId), HOST_GRACE_MS);
+      }
+      if (this.phase === 'lobby') {
+        this.dropTimers.set(playerId, setTimeout(() => this.dropIfGone(playerId), LOBBY_DROP_MS));
+      }
+    }
     if (this.phase === 'round' && this.allGuessed()) return this.finishRound();
     this.changed();
   }
@@ -114,7 +132,8 @@ export class Room {
     const idx = this.players.findIndex((p) => p.id === playerId);
     if (idx < 0) return;
     this.players.splice(idx, 1);
-    if (this.hostId === playerId) this.hostId = this.players[0]?.id ?? null;
+    this.cancelPresenceTimers(playerId);
+    if (this.hostId === playerId) this.hostId = this.nextHost(playerId);
     if (this.phase === 'round' && this.allGuessed()) return this.finishRound();
     this.changed();
   }
@@ -131,13 +150,21 @@ export class Room {
     this.changed();
   }
 
-  setTeam(_byId: string, _targetId: string, _team: TeamId): void {
-    // Duelo: Task 9.
+  setTeam(byId: string, targetId: string, team: TeamId): void {
+    if (this.phase !== 'lobby' || (team !== 'A' && team !== 'B')) return;
+    if (!this.isHost(byId) && byId !== targetId) return;
+    const target = this.player(targetId);
+    if (!target) return;
+    target.team = team;
+    this.changed();
   }
 
   start(byId: string): void {
     if (!this.isHost(byId) || this.phase !== 'lobby') return;
+    const duel = this.settings.mode === 'duel';
+    if (duel && !(['A', 'B'] as TeamId[]).every((t) => this.activePlayers().some((p) => p.team === t))) return;
     this.map = this.deps.loadMap(this.settings.mapId);
+    this.duelHp = duel ? { A: this.settings.duelStartHp, B: this.settings.duelStartHp } : null;
     this.deck = createDeck(this.map.pontos, this.deps.rng);
     for (const p of this.players) p.total = 0;
     this.history = [];
@@ -161,6 +188,7 @@ export class Room {
     this.history = [];
     this.nextAt = null;
     this.winner = null;
+    this.duelHp = null;
     this.changed();
   }
 
@@ -172,6 +200,7 @@ export class Room {
     if (!isValidLatLng(p)) return;
     this.guesses.set(playerId, { lat: p.lat, lng: p.lng });
     if (this.allGuessed()) return this.finishRound();
+    if (this.settings.mode === 'duel' && this.guesses.size === 1) this.startGuessCountdown();
     this.changed();
   }
 
@@ -218,7 +247,7 @@ export class Room {
           : null,
       result: this.phase === 'result' || this.phase === 'finished' ? this.result : null,
       history: this.history,
-      duelHp: null,
+      duelHp: this.phase === 'lobby' ? null : this.duelHp,
       nextAt: this.phase === 'result' ? this.nextAt : null,
       winner: this.winner,
       serverNow: Date.now(),
@@ -275,7 +304,15 @@ export class Room {
       p.total += score;
       return { playerId: p.id, guess: g, distanceKm, score };
     });
-    this.result = { round: this.roundNumber, answer: this.point, guesses, duel: null };
+    let duel: RoundResultView['duel'] = null;
+    if (this.settings.mode === 'duel' && this.duelHp) {
+      const best = (t: TeamId) =>
+        Math.max(0, ...guesses.filter((g) => this.player(g.playerId)?.team === t).map((g) => g.score));
+      const s = this.settings;
+      duel = resolveDuelRound({ A: best('A'), B: best('B') }, this.duelHp, duelMultiplier(this.roundNumber, s.duelMultiplierStartRound, s.duelMultiplierStep));
+      this.duelHp = duel.hp;
+    }
+    this.result = { round: this.roundNumber, answer: this.point, guesses, duel };
     this.history.push(this.result);
     this.phase = 'result';
     this.deadline = null;
@@ -287,19 +324,80 @@ export class Room {
 
   private advance(): void {
     if (this.phase !== 'result') return;
-    if (this.roundNumber >= this.settings.rounds) return this.finishGame();
+    if (this.duelHp) {
+      if (this.duelHp.A <= 0 || this.duelHp.B <= 0) return this.finishGame();
+    } else if (this.roundNumber >= this.settings.rounds) return this.finishGame();
     this.startRound(this.roundNumber + 1);
   }
 
   private finishGame(): void {
     this.clearTimers();
-    const active = this.activePlayers();
-    const best = Math.max(0, ...active.map((p) => p.total));
-    this.winner = { playerIds: active.filter((p) => p.total === best).map((p) => p.id) };
+    if (this.duelHp) {
+      const { A, B } = this.duelHp;
+      this.winner = A === B ? null : { team: A > B ? 'A' : 'B' };
+    } else {
+      const active = this.activePlayers();
+      const best = Math.max(0, ...active.map((p) => p.total));
+      this.winner = { playerIds: active.filter((p) => p.total === best).map((p) => p.id) };
+    }
     this.phase = 'finished';
     this.nextAt = null;
     this.deadline = null;
     this.changed();
+  }
+
+  /** Duelo: o primeiro palpite encurta o prazo para duelGuessCountdownSec, se faltar mais que isso. */
+  private startGuessCountdown(): void {
+    const ms = this.settings.duelGuessCountdownSec * 1000;
+    const shortened = Date.now() + ms;
+    if (this.deadline !== null && this.deadline <= shortened) return;
+    this.deadline = shortened;
+    if (this.roundTimer) clearTimeout(this.roundTimer);
+    this.roundTimer = setTimeout(() => this.finishRound(), ms);
+  }
+
+  private smallerTeam(): TeamId {
+    const count = (t: TeamId) => this.players.filter((p) => p.team === t).length;
+    return count('B') < count('A') ? 'B' : 'A';
+  }
+
+  private nextHost(excludeId: string): string | null {
+    const others = this.players.filter((p) => p.id !== excludeId);
+    return (others.find((p) => p.connected) ?? others[0])?.id ?? null;
+  }
+
+  private transferHost(fromId: string): void {
+    this.hostTimer = null;
+    const p = this.player(fromId);
+    if (!p || p.connected || this.hostId !== fromId) return;
+    const next = this.players.find((x) => x.id !== fromId && x.connected);
+    if (!next) return;
+    this.hostId = next.id;
+    this.changed();
+  }
+
+  private dropIfGone(playerId: string): void {
+    this.dropTimers.delete(playerId);
+    const p = this.player(playerId);
+    if (p && !p.connected && this.phase === 'lobby') this.removePlayer(playerId);
+  }
+
+  private cancelPresenceTimers(playerId: string): void {
+    const t = this.dropTimers.get(playerId);
+    if (t) clearTimeout(t);
+    this.dropTimers.delete(playerId);
+    if (this.isHost(playerId) && this.hostTimer) {
+      clearTimeout(this.hostTimer);
+      this.hostTimer = null;
+    }
+  }
+
+  dispose(): void {
+    this.clearTimers();
+    if (this.hostTimer) clearTimeout(this.hostTimer);
+    for (const t of this.dropTimers.values()) clearTimeout(t);
+    this.dropTimers.clear();
+    this.hostTimer = null;
   }
 
   private clearTimers(): void {
