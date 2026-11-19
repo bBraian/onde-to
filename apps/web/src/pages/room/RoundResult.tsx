@@ -1,14 +1,16 @@
-import { useMemo } from 'react';
-import { DEFAULT_AVATAR, type RoomView } from '@onde-to/shared';
+import { useEffect, useMemo, useRef } from 'react';
+import { DEFAULT_AVATAR, roundPoints, type RoomView } from '@onde-to/shared';
 import { ResultMap, type ResultGuess } from '../../components/ResultMap';
 import { Attribution } from '../../components/Attribution';
 import { HpBars } from '../../components/HpBars';
+import { PinAvatar } from '../../avatar/PinAvatar';
 import { mapName } from '../../game/loadMap';
 import { formatKm, formatPoints } from '../../lib/format';
+import { celebrate, useCountUp } from '../../lib/motion';
+import { remainingSec } from '../../lib/clock';
 import type { Send } from '../../lib/socket';
-import { Avatar } from './Avatar';
 import { AutoNext } from './AutoNext';
-import { isDuel, isLastRound, nickOf, playerColor, sortByTotal, TEAM_NAME } from './helpers';
+import { avatarOf, isDuel, isLastRound, nickOf, sortByTotal, TEAM_NAME } from './helpers';
 
 interface Props {
   view: RoomView;
@@ -20,20 +22,28 @@ interface Props {
 export function RoundResult({ view, me, offsetMs, send }: Props) {
   const result = view.result!;
   const duel = isDuel(view);
+  const byRounds = !duel && view.settings.scoring === 'rounds';
   const iAmHost = !!view.players.find((p) => p.id === me)?.isHost;
   const last = isLastRound(view);
-  const ranked = [...result.guesses].sort((a, b) => b.score - a.score);
+  const points = byRounds ? roundPoints(result.guesses) : null;
+  const ranked = [...result.guesses].sort((a, b) => (points ? points[b.playerId] - points[a.playerId] : 0) || b.score - a.score);
+  const mine = result.guesses.find((g) => g.playerId === me);
+  const shown = useCountUp(mine?.score ?? 0);
   const guesses: ResultGuess[] = useMemo(
     () =>
-      result.guesses.map((g) => ({
-        guess: g.guess,
-        label: nickOf(view, g.playerId),
-        avatar: view.players.find((p) => p.id === g.playerId)?.avatar ?? DEFAULT_AVATAR,
-      })),
-    // o resultado de uma rodada não muda; refazer o mapa só quando a rodada mudar
+      result.guesses.map((g) => ({ guess: g.guess, label: nickOf(view, g.playerId), avatar: avatarOf(view, g.playerId) ?? DEFAULT_AVATAR })),
+    // o resultado de uma rodada não muda; refazer só quando a rodada mudar
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [result.round, result.answer.imageId],
   );
+  const celebrated = useRef(false);
+  useEffect(() => {
+    if (!celebrated.current && mine?.score === 5000) {
+      celebrated.current = true;
+      celebrate('perfect');
+    }
+  }, [mine?.score]);
+  const autoTotalSec = view.settings.autoAdvanceSec ?? 0;
 
   return (
     <div className="result-layout">
@@ -45,9 +55,16 @@ export function RoundResult({ view, me, offsetMs, send }: Props) {
           <p className="eyebrow">
             Rodada {result.round}{!duel && ` de ${view.settings.rounds}`} · {mapName(view.settings.mapId)}
           </p>
-          <h1 className="result-title">Era em {result.answer.regiao}</h1>
+          <h1 className="result-title">Era em {result.answer.regiao}!</h1>
           <Attribution autor={result.answer.autor} className="attribution muted" />
         </div>
+
+        {mine && (
+          <div className="score-sticker pop" aria-live="polite">
+            <span>{mine.guess ? `Você errou por ${formatKm(mine.distanceKm!)}` : 'Você não chutou'}</span>
+            <strong>+{formatPoints(shown)}</strong>
+          </div>
+        )}
 
         {duel && result.duel && view.duelHp && (
           <div className="card compact">
@@ -59,22 +76,26 @@ export function RoundResult({ view, me, offsetMs, send }: Props) {
             <p className="duel-summary">
               {result.duel.damagedTeam
                 ? `${TEAM_NAME[result.duel.damagedTeam]} perdeu ${formatPoints(result.duel.damage)} de vida${result.duel.multiplier > 1 ? ` (${String(result.duel.multiplier).replace('.', ',')}×)` : ''}`
-                : 'Empate — ninguém perdeu vida'}
+                : 'Empate, ninguém perdeu vida'}
             </p>
-            <HpBars hp={view.duelHp} startHp={view.settings.duelStartHp} />
+            <HpBars hp={view.duelHp} startHp={view.settings.duelStartHp} shakeTeam={result.duel.damagedTeam} />
           </div>
         )}
 
         <ol className="rank-list" data-testid="round-table">
           {ranked.map((g, i) => (
-            <li key={g.playerId} className="rank-row">
+            <li key={g.playerId} className={`rank-row${i === 0 && g.guess ? ' rank-first' : ''}`}>
               <span className="rank-n">{i + 1}</span>
-              <Avatar nick={nickOf(view, g.playerId)} color={playerColor(view, g.playerId)} />
+              <PinAvatar avatar={avatarOf(view, g.playerId) ?? DEFAULT_AVATAR} size={32} title="" />
               <span className="rank-name">
                 {nickOf(view, g.playerId)} {g.playerId === me && <span className="muted">(você)</span>}
               </span>
               <span className="muted tabular">{g.distanceKm !== null ? formatKm(g.distanceKm) : 'sem palpite'}</span>
-              <span className="rank-score">{formatPoints(g.score)}</span>
+              {points ? (
+                points[g.playerId] > 0 ? <span className="rank-plus">+1 ponto</span> : <span className="rank-score">0</span>
+              ) : (
+                <span className="rank-score">{formatPoints(g.score)}</span>
+              )}
             </li>
           ))}
         </ol>
@@ -84,8 +105,11 @@ export function RoundResult({ view, me, offsetMs, send }: Props) {
             <h2 className="small-title">Placar da partida</h2>
             {sortByTotal(view.players.filter((p) => !p.spectator)).map((p) => (
               <div key={p.id} className="score-line">
-                <span>{p.nick}</span>
-                <strong className="tabular">{formatPoints(p.total)}</strong>
+                <span className="row" style={{ alignItems: 'center' }}>
+                  <PinAvatar avatar={p.avatar} size={24} title="" />
+                  {p.nick}
+                </span>
+                <strong className="tabular">{byRounds ? `${p.total} ${p.total === 1 ? 'ponto' : 'pontos'}` : formatPoints(p.total)}</strong>
               </div>
             ))}
           </div>
@@ -97,9 +121,23 @@ export function RoundResult({ view, me, offsetMs, send }: Props) {
               {last ? 'Ver resultado final' : 'Próxima rodada'}
             </button>
           ) : (
-            <p className="muted center-text">Esperando o dono da sala…</p>
+            <p className="center-text">Esperando o dono da sala…</p>
           )}
-          {view.nextAt && <AutoNext at={view.nextAt} offsetMs={offsetMs} label={last ? 'Resultado final' : 'Próxima rodada'} />}
+          {view.nextAt && autoTotalSec > 0 && (
+            <>
+              <div className="next-bar" aria-hidden="true">
+                <div
+                  key={view.nextAt}
+                  className="shrink"
+                  style={{
+                    animationDuration: `${autoTotalSec}s`,
+                    animationDelay: `-${Math.max(0, autoTotalSec - remainingSec(view.nextAt, Date.now(), offsetMs))}s`,
+                  }}
+                />
+              </div>
+              <AutoNext at={view.nextAt} offsetMs={offsetMs} label={last ? 'Resultado final' : 'Próxima rodada'} />
+            </>
+          )}
         </div>
       </aside>
     </div>

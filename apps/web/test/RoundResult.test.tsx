@@ -36,3 +36,20 @@ test('resultado do duelo mostra os pontos de cada time', async () => {
   expect(text).toContain('1.887');
   root.unmount();
 });
+
+test('clássico com pontuação por rodada marca +1 ponto para o mais próximo', async () => {
+  const classic: RoomView = {
+    ...view,
+    settings: { ...view.settings, mode: 'classic', scoring: 'rounds' },
+    duelHp: null,
+    result: { ...view.result!, duel: null },
+  };
+  const el = document.createElement('div');
+  const root = createRoot(el);
+  await act(async () => { root.render(<RoundResult view={classic} me="a" offsetMs={0} send={() => {}} />); });
+  const rows = Array.from(el.querySelectorAll('[data-testid="round-table"] li')).map((li) => li.textContent ?? '');
+  expect(rows[0]).toContain('Ana');
+  expect(rows[0]).toContain('+1 ponto');
+  expect(rows[1]).not.toContain('+1');
+  root.unmount();
+});

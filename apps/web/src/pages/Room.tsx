@@ -7,6 +7,10 @@ import { Lobby } from './room/Lobby';
 import { RoundView } from './room/RoundView';
 import { RoundResult } from './room/RoundResult';
 import { Finished } from './room/Finished';
+import { providerMismatch } from './room/helpers';
+
+/** Provedor de imagens deste site (o Task 8 passa a ler da configuração). */
+const SITE_PROVIDER = 'mapillary' as const;
 
 export function Room() {
   const { code = NEW_ROOM } = useParams();
@@ -54,6 +58,15 @@ function RoomSession({ code, nick, onBadNick }: { code: string; nick: string; on
     return (
       <Message title={status === 'waking' ? 'Acordando o servidor…' : 'Conectando…'}>
         {status === 'waking' ? 'Ele dorme quando ninguém joga. Pode levar até 1 minuto.' : null}
+      </Message>
+    );
+  }
+
+  if (providerMismatch(view, SITE_PROVIDER)) {
+    return (
+      <Message title="Configuração diferente">
+        Servidor e site usam provedores diferentes (servidor: {view.provider}, site: {SITE_PROVIDER}).
+        <Link to="/" className="btn btn-primary">Voltar ao início</Link>
       </Message>
     );
   }

@@ -6,9 +6,9 @@ import { Countdown } from '../../components/Countdown';
 import { Attribution } from '../../components/Attribution';
 import { HpBars } from '../../components/HpBars';
 import { initialView } from '../../components/mapStyle';
+import { PinAvatar } from '../../avatar/PinAvatar';
 import type { Send } from '../../lib/socket';
-import { Avatar } from './Avatar';
-import { activePlayers, isDuel, playerColor } from './helpers';
+import { activePlayers, isDuel } from './helpers';
 
 interface Props {
   view: RoomView;
@@ -44,22 +44,22 @@ export function RoundView({ view, me, offsetMs, send }: Props) {
         </div>
         {duel && view.duelHp && (
           <div className="hud-hp">
-            <HpBars hp={view.duelHp} startHp={s.duelStartHp} dark />
+            <HpBars hp={view.duelHp} startHp={s.duelStartHp} />
           </div>
         )}
         {round.deadline && <Countdown deadline={round.deadline} offsetMs={offsetMs} />}
       </div>
 
       <div className="hud-right">
-        {duel && firstGuesser && !guessed && <span className="hud-note">{firstGuesser.nick} já chutou — corre!</span>}
         <ul className="guessed-list" aria-label="Quem já chutou">
           {activePlayers(view).map((p) => (
-            <li key={p.id}>
-              <Avatar nick={p.nick} color={playerColor(view, p.id)} dimmed={!p.connected} ring={p.hasGuessed ? 'var(--guessed)' : 'var(--hud)'} />
+            <li key={p.id} data-done={p.hasGuessed ? '' : undefined} title={p.nick}>
+              <PinAvatar avatar={p.avatar} size={30} title="" />
               <span className="sr-only">{p.hasGuessed ? `${p.nick} já chutou` : `${p.nick} ainda não chutou`}</span>
             </li>
           ))}
         </ul>
+        {duel && firstGuesser && !guessed && <span className="hud-note pop">{firstGuesser.nick} já chutou, corre!</span>}
       </div>
 
       <div className="hud-bottom-left">
@@ -85,13 +85,8 @@ export function RoundView({ view, me, offsetMs, send }: Props) {
             <div className="guess-map">
               <GuessMap pins={pin ? [{ id: me, avatar: self?.avatar ?? DEFAULT_AVATAR, guess: pin }] : []} onPick={setPin} disabled={guessed} view={mapView} />
             </div>
-            <button
-              type="button"
-              className="btn btn-primary btn-lg"
-              disabled={!pin || guessed}
-              onClick={() => pin && send('round:guess', pin)}
-            >
-              {guessed ? 'Palpite enviado — esperando os outros' : pin ? 'Chutar' : 'Clique no mapa para marcar'}
+            <button type="button" className="btn btn-primary btn-lg" disabled={!pin || guessed} onClick={() => pin && send('round:guess', pin)}>
+              {guessed ? 'Palpite enviado, esperando a galera' : pin ? 'Chutar' : 'Clique no mapa para marcar'}
             </button>
           </>
         )}

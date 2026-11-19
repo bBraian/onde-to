@@ -33,6 +33,7 @@ async function openRoom(browser: Browser) {
   await bia.goto(`/sala/${code.toLowerCase()}`);
   await expect(ana.getByText('Bia', { exact: true })).toBeVisible();
   await expect(bia.getByText('Ana', { exact: true })).toBeVisible();
+  await expect(ana.locator('.lobby-players [data-avatar]')).toHaveCount(2);
   await ana.getByLabel('Mapa').selectOption('teste');
   return { ana, bia };
 }
@@ -47,6 +48,7 @@ test('clássico: duas pessoas jogam uma rodada até o pódio', async ({ browser 
   await guess(bia);
 
   for (const p of [ana, bia]) await expect(p.getByTestId('round-table').locator('li')).toHaveCount(2);
+  await expect(ana.locator('[data-result-pin]')).toHaveCount(2);
   await expect(bia.getByRole('button', { name: 'Ver resultado final' })).toHaveCount(0);
   await ana.getByRole('button', { name: 'Ver resultado final' }).click();
   for (const p of [ana, bia]) await expect(p.getByTestId('winner')).toContainText(/venc/);

@@ -3,6 +3,7 @@ import { io, type Socket } from 'socket.io-client';
 import type { ClientToServerEvents, JoinAck, RoomView, ServerToClientEvents } from '@onde-to/shared';
 import { config } from './config';
 import { getSession } from './session';
+import { getAvatar } from '../avatar/storage';
 
 export type GameSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
 export type RoomStatus = 'connecting' | 'waking' | 'joined' | 'not_found' | 'full' | 'invalid_nick';
@@ -54,8 +55,9 @@ export function useRoom(code: string, nick: string | null, onCreated: (code: str
     socket.on('connect', () => {
       window.clearTimeout(waking);
       const session = getSession();
-      if (joinedCode.current) socket.emit('room:join', { code: joinedCode.current, nick, session }, handleAck);
-      else socket.emit('room:create', { nick, session }, handleAck);
+      const avatar = getAvatar();
+      if (joinedCode.current) socket.emit('room:join', { code: joinedCode.current, nick, session, avatar }, handleAck);
+      else socket.emit('room:create', { nick, session, avatar }, handleAck);
     });
     socket.on('room:state', (v) => {
       setView(v);

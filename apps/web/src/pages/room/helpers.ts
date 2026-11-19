@@ -1,4 +1,4 @@
-import type { PlayerView, RoomView, TeamId } from '@onde-to/shared';
+import type { PlayerView, RoomView, StreetProvider, TeamId } from '@onde-to/shared';
 
 export const TEAM_COLOR: Record<TeamId, string> = { A: '#B8461A', B: '#2563C9' };
 export const TEAM_NAME: Record<TeamId, string> = { A: 'Time A', B: 'Time B' };
@@ -28,5 +28,10 @@ export function isLastRound(v: RoomView): boolean {
 }
 
 export const nickOf = (v: RoomView, id: string) => v.players.find((p) => p.id === id)?.nick ?? '—';
+
+/** O servidor escolhe os lugares de um provedor; o site precisa mostrar as imagens do mesmo. */
+export const providerMismatch = (v: RoomView, local: StreetProvider) => v.provider !== local;
+
+export const avatarOf = (v: RoomView, id: string) => v.players.find((p) => p.id === id)?.avatar;
 
 export const sortByTotal = (players: PlayerView[]) => [...players].sort((a, b) => b.total - a.total);

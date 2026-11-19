@@ -1,6 +1,6 @@
 import type { PlayerView, RoomView } from '@onde-to/shared';
 import { DEFAULT_AVATAR, DEFAULT_SETTINGS } from '@onde-to/shared';
-import { canStart, playerColor, isLastRound } from '../src/pages/room/helpers';
+import { canStart, playerColor, isLastRound, providerMismatch } from '../src/pages/room/helpers';
 
 const p = (id: string, team: 'A' | 'B', extra: Partial<PlayerView> = {}): PlayerView => ({
   id, nick: id, avatar: DEFAULT_AVATAR, team, isHost: false, connected: true, spectator: false, hasGuessed: false, total: 0, ...extra,
@@ -35,4 +35,9 @@ test('isLastRound', () => {
   expect(isLastRound(view({ phase: 'result', round: { number: 4, imageId: 'x', deadline: null } }))).toBe(false);
   const duel = { ...DEFAULT_SETTINGS, mode: 'duel' as const };
   expect(isLastRound(view({ settings: duel, phase: 'result', duelHp: { A: 0, B: 300 }, round: { number: 2, imageId: 'x', deadline: null } }))).toBe(true);
+});
+
+test('providerMismatch compara o provedor do servidor com o do site', () => {
+  expect(providerMismatch(view({ provider: 'google' }), 'mapillary')).toBe(true);
+  expect(providerMismatch(view({ provider: 'mapillary' }), 'mapillary')).toBe(false);
 });

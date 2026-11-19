@@ -1,10 +1,12 @@
+import { useEffect } from 'react';
 import type { RoomView } from '@onde-to/shared';
 import { Logo } from '../../components/Logo';
 import { HpBars } from '../../components/HpBars';
+import { PinAvatar } from '../../avatar/PinAvatar';
 import { formatPoints } from '../../lib/format';
+import { celebrate } from '../../lib/motion';
 import type { Send } from '../../lib/socket';
-import { Avatar } from './Avatar';
-import { isDuel, nickOf, playerColor, sortByTotal, TEAM_NAME } from './helpers';
+import { isDuel, nickOf, sortByTotal, TEAM_NAME } from './helpers';
 
 interface Props {
   view: RoomView;
@@ -15,6 +17,7 @@ interface Props {
 
 export function Finished({ view, me, send, onLeave }: Props) {
   const duel = isDuel(view);
+  const byRounds = !duel && view.settings.scoring === 'rounds';
   const iAmHost = !!view.players.find((p) => p.id === me)?.isHost;
   const w = view.winner;
   const headline = duel
@@ -25,32 +28,36 @@ export function Finished({ view, me, send, onLeave }: Props) {
       ? `${w.playerIds.map((id) => nickOf(view, id)).join(' e ')} ${w.playerIds.length > 1 ? 'venceram' : 'venceu'}!`
       : 'Fim de partida';
   const podium = sortByTotal(view.players.filter((p) => !p.spectator));
+  const winnerIds = w && 'playerIds' in w ? w.playerIds : duel && w && 'team' in w ? view.players.filter((p) => p.team === w.team).map((p) => p.id) : [];
+
+  useEffect(() => {
+    celebrate('podium');
+  }, []);
 
   return (
     <div className="page">
       <header className="topbar">
-        <Logo size={22} />
+        <Logo />
       </header>
       <main className="narrow">
         <p className="eyebrow">Fim de partida · {view.history.length} {view.history.length === 1 ? 'rodada' : 'rodadas'}</p>
         <h1 className="page-title" data-testid="winner">{headline}</h1>
 
-        {duel && view.duelHp ? (
+        {duel && view.duelHp && (
           <div className="card compact">
             <HpBars hp={view.duelHp} startHp={view.settings.duelStartHp} />
           </div>
-        ) : (
-          <ol className="rank-list">
-            {podium.map((p, i) => (
-              <li key={p.id} className={`rank-row${i === 0 ? ' rank-first' : ''}`}>
-                <span className="rank-n">{i + 1}</span>
-                <Avatar nick={p.nick} color={playerColor(view, p.id)} />
-                <span className="rank-name">{p.nick} {p.id === me && <span className="muted">(você)</span>}</span>
-                <span className="rank-score">{formatPoints(p.total)}</span>
-              </li>
-            ))}
-          </ol>
         )}
+        <ol className="rank-list">
+          {podium.map((p, i) => (
+            <li key={p.id} className={`rank-row pop${winnerIds.includes(p.id) ? ' rank-first' : ''}`} style={{ animationDelay: `${i * 60}ms` }}>
+              <span className="rank-n">{i + 1}</span>
+              <PinAvatar avatar={p.avatar} size={40} title="" />
+              <span className="rank-name">{p.nick} {p.id === me && <span className="muted">(você)</span>}</span>
+              {!duel && <span className="rank-score">{byRounds ? `${p.total} ${p.total === 1 ? 'ponto' : 'pontos'}` : formatPoints(p.total)}</span>}
+            </li>
+          ))}
+        </ol>
 
         <h2 className="small-title">Rodada a rodada</h2>
         <ol className="rank-list">
@@ -71,7 +78,7 @@ export function Finished({ view, me, send, onLeave }: Props) {
           {iAmHost ? (
             <button type="button" className="btn btn-primary btn-lg" onClick={() => send('room:lobby')}>Jogar de novo</button>
           ) : (
-            <p className="muted">Esperando o dono da sala começar outra…</p>
+            <p>Esperando o dono da sala começar outra…</p>
           )}
           <button type="button" className="btn btn-outline btn-lg" onClick={onLeave}>Sair</button>
         </div>
