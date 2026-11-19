@@ -22,6 +22,8 @@ export interface MapSpec {
 
 export const MIN_QUALITY = 0.5;
 export const MIN_POINTS = 100;
+/** Sorteios por candidato antes de desistir dele (com resolve, cada sorteio pode trazer outra foto da sequência). */
+export const MAX_PICKS_PER_CANDIDATE = 6;
 
 /** A spec exige pelo menos 100 pontos para um mapa ir para o jogo. */
 export function isPublishable(map: GameMap): boolean {
@@ -35,11 +37,12 @@ export async function buildMap(
   maxAttemptsPerPoint = 20,
   concurrency = 1,
   /** Posição exata e autor da imagem escolhida (os candidatos podem ter posição aproximada). */
-  resolve?: (img: MlyImage) => Promise<MlyImage | null>,
+  resolve?: (img: MlyImage, rng: () => number) => Promise<MlyImage | null>,
 ): Promise<{ map: GameMap; report: Record<string, { target: number; got: number }> }> {
   const pontos: MapPoint[] = [];
   const usedIds = new Set<string>();
-  const tried = new Set<string>();
+  /** Quantas vezes cada candidato (sequência) já foi sorteado: cada sorteio pode render uma foto diferente. */
+  const picks = new Map<string, number>();
   const report: Record<string, { target: number; got: number }> = {};
 
   async function fillRegion(region: Region) {
@@ -54,16 +57,16 @@ export async function buildMap(
         continue; // falha passageira: conta como tentativa sem imagem
       }
       const candidates = images.filter(
-        (i) => !usedIds.has(i.id) && !tried.has(i.id) && (!region.contains || region.contains(i)),
+        (i) => !usedIds.has(i.id) && (picks.get(i.id) ?? 0) < MAX_PICKS_PER_CANDIDATE && (!region.contains || region.contains(i)),
       );
       const pick = pickImage(candidates, MIN_QUALITY, rng);
       if (!pick) continue;
       let img = pick;
       if (resolve) {
-        tried.add(pick.id);
+        picks.set(pick.id, (picks.get(pick.id) ?? 0) + 1);
         let exact: MlyImage | null;
         try {
-          exact = await resolve(pick);
+          exact = await resolve(pick, rng);
         } catch (err) {
           if (err instanceof FatalSearchError) throw err;
           continue;

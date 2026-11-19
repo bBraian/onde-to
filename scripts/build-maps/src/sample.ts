@@ -6,6 +6,8 @@ export interface MlyImage {
   lng: number;
   quality: number | null;
   creator: string | null;
+  /** Sequência do Mapillary de onde o candidato veio (permite sortear outra foto dela). */
+  sequence?: string;
 }
 
 export function pickImage(images: MlyImage[], minQuality: number, rng: () => number): MlyImage | null {

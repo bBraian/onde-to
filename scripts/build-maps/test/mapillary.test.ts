@@ -21,6 +21,7 @@ test('parseSequenceTile lista só sequências 360°, sem repetir imagem, dentro 
     expect(i.lat).toBeGreaterThanOrEqual(s - 0.05);
     expect(i.lat).toBeLessThanOrEqual(n + 0.05);
     expect(typeof i.id).toBe('string');
+    expect(typeof i.sequence).toBe('string');
   }
 });
 
@@ -72,5 +73,20 @@ test('createTileSource busca cada tile uma vez só e resolve a posição exata',
   expect(b).toBe(a);
   expect(fetchMock.mock.calls.filter(([u]) => String(u).includes('tiles.mapillary.com'))).toHaveLength(1);
   expect(await src.resolve(a[0])).toEqual({ id: '9', lat: -21.11, lng: -44.18, quality: null, creator: 'bia' });
+  vi.unstubAllGlobals();
+});
+
+test('resolve de candidato com sequência sorteia uma foto da sequência', async () => {
+  const fetchMock = vi.fn(async (url: string) => {
+    if (url.includes('/image_ids?')) return new Response(JSON.stringify({ data: [{ id: '11' }, { id: '22' }, { id: '33' }] }), { status: 200 });
+    const id = url.split('/').pop()!.split('?')[0];
+    return new Response(JSON.stringify({ id, computed_geometry: { coordinates: [1, 2] } }), { status: 200 });
+  });
+  vi.stubGlobal('fetch', fetchMock);
+  const src = createTileSource('T', 12);
+  const got = await src.resolve({ id: 'rep', lat: 0, lng: 0, quality: 0.9, creator: null, sequence: 'S1' }, () => 0.5);
+  expect(got).toEqual({ id: '22', lat: 2, lng: 1, quality: null, creator: null });
+  await src.resolve({ id: 'rep', lat: 0, lng: 0, quality: 0.9, creator: null, sequence: 'S1' }, () => 0);
+  expect(fetchMock.mock.calls.filter(([u]) => String(u).includes('/image_ids?'))).toHaveLength(1);
   vi.unstubAllGlobals();
 });

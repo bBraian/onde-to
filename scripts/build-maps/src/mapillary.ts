@@ -77,7 +77,8 @@ export function parseSequenceTile(buf: Uint8Array, z: number, x: number, y: numb
     if (!first) continue;
     seen.add(id);
     const q = props.quality_score;
-    out.push({ id, lat: first[1], lng: first[0], quality: typeof q === 'number' ? q : null, creator: null });
+    const sequence = props.id === undefined ? undefined : String(props.id);
+    out.push({ id, lat: first[1], lng: first[0], quality: typeof q === 'number' ? q : null, creator: null, ...(sequence ? { sequence } : {}) });
   }
   return out;
 }
@@ -103,7 +104,22 @@ export function parseImageDetails(r: RawImage): MlyImage | null {
  */
 export function createTileSource(token: string, zoom: number) {
   const cache = new Map<string, Promise<MlyImage[]>>();
+  const sequenceImages = new Map<string, Promise<string[]>>();
   const auth = encodeURIComponent(token);
+
+  const imagesOf = (sequence: string): Promise<string[]> => {
+    let hit = sequenceImages.get(sequence);
+    if (!hit) {
+      hit = fetchWithRetry(`${GRAPH_URL}/image_ids?sequence_id=${encodeURIComponent(sequence)}&access_token=${auth}`)
+        .then(async (res) => ((await res.json()) as { data?: { id: string }[] }).data?.map((d) => String(d.id)) ?? [])
+        .catch((err) => {
+          sequenceImages.delete(sequence);
+          throw err;
+        });
+      sequenceImages.set(sequence, hit);
+    }
+    return hit;
+  };
 
   return {
     candidates(p: LatLng): Promise<MlyImage[]> {
@@ -122,8 +138,14 @@ export function createTileSource(token: string, zoom: number) {
       return hit;
     },
 
-    async resolve(img: MlyImage): Promise<MlyImage | null> {
-      const res = await fetchWithRetry(`${GRAPH_URL}/${img.id}?fields=${DETAIL_FIELDS}&access_token=${auth}`);
+    /** Posição exata e autor. Com sequência, sorteia uma foto qualquer dela (mais variedade por rua). */
+    async resolve(img: MlyImage, rng: () => number = Math.random): Promise<MlyImage | null> {
+      let id = img.id;
+      if (img.sequence) {
+        const ids = await imagesOf(img.sequence);
+        if (ids.length) id = ids[Math.floor(rng() * ids.length)];
+      }
+      const res = await fetchWithRetry(`${GRAPH_URL}/${id}?fields=${DETAIL_FIELDS}&access_token=${auth}`);
       return parseImageDetails((await res.json()) as RawImage);
     },
   };

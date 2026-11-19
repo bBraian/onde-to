@@ -22,7 +22,7 @@ async function main() {
     console.log(`\n▶ ${spec.nome}: alvo ${target} pontos em ${spec.regions.length} regiões`);
     const source = createTileSource(token, spec.tileZoom ?? 12);
     const started = Date.now();
-    const { map, report } = await buildMap(spec, (p) => source.candidates(p), mulberry32(Date.now()), 20, 8, (img) => source.resolve(img));
+    const { map, report } = await buildMap(spec, (p) => source.candidates(p), mulberry32(Date.now()), 20, 8, (img, rng) => source.resolve(img, rng));
     console.log(`  levou ${Math.round((Date.now() - started) / 1000)} s`);
     const publishable = isPublishable(map);
     if (publishable) writeFileSync(join(OUT_DIR, `${id}.json`), JSON.stringify(map) + '\n');

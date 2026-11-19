@@ -86,3 +86,11 @@ test('candidato que o resolve não acha é descartado', async () => {
   const { map } = await buildMap({ id: 'x', nome: 'X', regions: [{ name: 'R', target: 1, sample: () => ({ lat: 0, lng: 0 }) }], minKm: 1 }, search, mulberry32(1), 20, 1, resolve);
   expect(map.pontos.map((p) => p.imageId)).toEqual(['c2']);
 });
+
+test('a mesma sequência pode render vários pontos quando o resolve sorteia fotos diferentes', async () => {
+  let k = 0;
+  const search = async () => [{ id: 'seq-rep', lat: 0, lng: 0, quality: 0.9, creator: null }];
+  const resolve = async () => { k++; return { id: `foto-${k}`, lat: k, lng: k, quality: 0.9, creator: null }; };
+  const { map } = await buildMap({ id: 'x', nome: 'X', regions: [{ name: 'R', target: 3, sample: () => ({ lat: 0, lng: 0 }) }], minKm: 1 }, search, mulberry32(1), 20, 1, resolve);
+  expect(map.pontos.map((p) => p.imageId)).toEqual(['foto-1', 'foto-2', 'foto-3']);
+});
