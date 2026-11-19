@@ -30,6 +30,14 @@ test('sozinho: três rodadas até o fim, com recorde', async ({ page }) => {
     await page.getByTestId('guess-map').click();
     await page.getByRole('button', { name: 'Chutar' }).click();
     await expect(page.getByTestId('result-map')).toBeVisible();
+    if (i === 1) {
+      // o alfinete do palpite tem que ficar onde foi o palpite, não no canto do mapa (a animação não pode roubar o transform do marcador)
+      await page.waitForTimeout(1200);
+      const mapBox = (await page.getByTestId('result-map').boundingBox())!;
+      const pinBox = (await page.locator('[data-result-pin]').first().boundingBox())!;
+      expect(pinBox.x - mapBox.x).toBeGreaterThan(20);
+      expect(pinBox.y - mapBox.y).toBeGreaterThan(20);
+    }
     await page.getByRole('button', { name: i < 3 ? 'Próxima rodada' : 'Ver resultado final' }).click();
   }
   await expect(page.getByText('Novo recorde!')).toBeVisible();

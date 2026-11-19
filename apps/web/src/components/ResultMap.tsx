@@ -13,24 +13,33 @@ export interface ResultGuess {
 const PIN_SIZE = 38;
 const STAGGER_MS = 150;
 
+// O MapLibre posiciona o marcador com `transform` no elemento raiz; a animação fica num filho,
+// senão ela sobrescreve a posição e o pino vai parar no canto do mapa.
+function animated(className: string, html: string): HTMLElement {
+  const inner = document.createElement('div');
+  inner.className = className;
+  inner.innerHTML = html;
+  return inner;
+}
+
 function flagElement(): HTMLElement {
   const el = document.createElement('div');
-  el.className = 'map-flag pop';
+  el.className = 'map-flag';
   el.setAttribute('role', 'img');
   el.setAttribute('aria-label', 'Local certo');
-  el.innerHTML =
-    '<svg width="48" height="48" viewBox="0 0 24 24"><path d="M5 22V3" stroke="#17231E" stroke-width="2.4" stroke-linecap="round"/><path d="M5 3h13l-3 4.5L18 12H5z" fill="#1A7A50" stroke="#17231E" stroke-width="1.8" stroke-linejoin="round"/></svg>';
+  el.append(animated('pop', '<svg width="48" height="48" viewBox="0 0 24 24"><path d="M5 22V3" stroke="#17231E" stroke-width="2.4" stroke-linecap="round"/><path d="M5 3h13l-3 4.5L18 12H5z" fill="#1A7A50" stroke="#17231E" stroke-width="1.8" stroke-linejoin="round"/></svg>'));
   return el;
 }
 
 /** Pino do palpite: o avatar do jogador, caindo no mapa um depois do outro. */
 function avatarElement(g: ResultGuess, i: number): HTMLElement {
   const el = document.createElement('div');
-  el.className = 'map-avatar drop';
-  el.style.animationDelay = `${200 + i * STAGGER_MS}ms`;
+  el.className = 'map-avatar';
   el.title = g.label;
   el.dataset.resultPin = '';
-  el.innerHTML = pinSvg(g.avatar, PIN_SIZE);
+  const inner = animated('drop', pinSvg(g.avatar, PIN_SIZE));
+  inner.style.animationDelay = `${200 + i * STAGGER_MS}ms`;
+  el.append(inner);
   return el;
 }
 

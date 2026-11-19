@@ -19,19 +19,24 @@ interface Props {
 
 const PIN_SIZE = 40;
 
+// O MapLibre posiciona o marcador com `transform` no elemento raiz: o desenho (e a animação) fica num filho.
 function pinElement(pin: MapPin): HTMLElement {
   const el = document.createElement('div');
   el.className = 'map-avatar';
   el.dataset.pin = pin.id;
-  el.innerHTML = pinSvg(pin.avatar, PIN_SIZE);
+  const inner = document.createElement('div');
+  inner.innerHTML = pinSvg(pin.avatar, PIN_SIZE);
+  el.append(inner);
   return el;
 }
 
 /** Reinicia o "boing" do pino (feedback de que o palpite foi colocado/movido). */
 function boing(el: HTMLElement) {
-  el.classList.remove('boing');
-  void el.offsetWidth;
-  el.classList.add('boing');
+  const inner = el.firstElementChild as HTMLElement | null;
+  if (!inner) return;
+  inner.classList.remove('boing');
+  void inner.offsetWidth;
+  inner.classList.add('boing');
 }
 
 /** Mapa de palpite: cada pino é o avatar do dono. O clique chama onPick (o dono decide de quem é o pino). */
@@ -87,7 +92,7 @@ export function GuessMap({ pins, onPick, disabled, view }: Props) {
         continue;
       }
       if (entry.look !== look) {
-        entry.el.innerHTML = pinSvg(pin.avatar, PIN_SIZE);
+        (entry.el.firstElementChild as HTMLElement).innerHTML = pinSvg(pin.avatar, PIN_SIZE);
         entry.look = look;
       }
       if (entry.at !== at) {
