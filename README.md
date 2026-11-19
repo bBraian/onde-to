@@ -89,6 +89,14 @@ Preços na data da v2:
 
 ## Variáveis de ambiente
 
+Há um modelo para cada parte, já com os valores não sensíveis preenchidos:
+
+| Modelo | O que fazer |
+|---|---|
+| `apps/web/env.example` | Copie para `apps/web/.env.local` e preencha o token do Mapillary e, se for usar o Google, a chave do site |
+| `apps/server/env.example` | Referência: o servidor recebe as variáveis na linha de comando ou no painel do Render |
+| `scripts/build-maps/env.example` | Referência: as chaves são passadas na linha de comando ao gerar os mapas |
+
 ### Site (`apps/web`)
 
 O Vite lê essas variáveis do ambiente ou de um arquivo `apps/web/.env.local`, que não vai para
