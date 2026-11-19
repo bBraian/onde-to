@@ -1,7 +1,7 @@
 import { AnimatePresence, MotionConfig, motion } from 'motion/react';
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router';
 import { Home } from './pages/Home';
-import { Training } from './pages/Training';
+import { Local } from './pages/Local';
 import { Room } from './pages/Room';
 import { AvatarEditor } from './pages/AvatarEditor';
 
@@ -19,7 +19,7 @@ function AnimatedRoutes() {
         <Routes location={location}>
           <Route path="/" element={<Home />} />
           <Route path="/avatar" element={<AvatarEditor />} />
-          <Route path="/local" element={<Training />} />
+          <Route path="/local" element={<Local />} />
           <Route path="/treino" element={<Navigate to="/local" replace />} />
           <Route path="/sala/:code" element={<Room />} />
         </Routes>

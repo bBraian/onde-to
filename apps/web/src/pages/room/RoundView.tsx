@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { duelMultiplier, type LatLng, type RoomView } from '@onde-to/shared';
+import { DEFAULT_AVATAR, duelMultiplier, type LatLng, type RoomView } from '@onde-to/shared';
 import { StreetViewer } from '../../components/StreetViewer';
 import { GuessMap } from '../../components/GuessMap';
 import { Countdown } from '../../components/Countdown';
@@ -83,7 +83,7 @@ export function RoundView({ view, me, offsetMs, send }: Props) {
         ) : (
           <>
             <div className="guess-map">
-              <GuessMap value={pin} onChange={setPin} disabled={guessed} view={mapView} />
+              <GuessMap pins={pin ? [{ id: me, avatar: self?.avatar ?? DEFAULT_AVATAR, guess: pin }] : []} onPick={setPin} disabled={guessed} view={mapView} />
             </div>
             <button
               type="button"

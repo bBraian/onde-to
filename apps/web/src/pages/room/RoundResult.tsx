@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import type { RoomView } from '@onde-to/shared';
+import { DEFAULT_AVATAR, type RoomView } from '@onde-to/shared';
 import { ResultMap, type ResultGuess } from '../../components/ResultMap';
 import { Attribution } from '../../components/Attribution';
 import { HpBars } from '../../components/HpBars';
@@ -24,7 +24,12 @@ export function RoundResult({ view, me, offsetMs, send }: Props) {
   const last = isLastRound(view);
   const ranked = [...result.guesses].sort((a, b) => b.score - a.score);
   const guesses: ResultGuess[] = useMemo(
-    () => result.guesses.map((g) => ({ guess: g.guess, label: nickOf(view, g.playerId), color: playerColor(view, g.playerId) })),
+    () =>
+      result.guesses.map((g) => ({
+        guess: g.guess,
+        label: nickOf(view, g.playerId),
+        avatar: view.players.find((p) => p.id === g.playerId)?.avatar ?? DEFAULT_AVATAR,
+      })),
     // o resultado de uma rodada não muda; refazer o mapa só quando a rodada mudar
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [result.round, result.answer.imageId],

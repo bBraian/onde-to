@@ -1,29 +1,36 @@
 import { useEffect, useMemo, useRef } from 'react';
+import type { Avatar, LatLng, MapPoint } from '@onde-to/shared';
 import { LngLatBounds, Map as MlMap, Marker } from './maplibre';
-import type { LatLng, MapPoint } from '@onde-to/shared';
+import { pinSvg } from '../avatar/pinSvg';
 import { MAP_STYLE, toLngLat } from './mapStyle';
 
 export interface ResultGuess {
   guess: LatLng | null;
   label: string;
-  color: string;
+  avatar: Avatar;
 }
+
+const PIN_SIZE = 38;
+const STAGGER_MS = 150;
 
 function flagElement(): HTMLElement {
   const el = document.createElement('div');
-  el.className = 'map-flag';
+  el.className = 'map-flag pop';
+  el.setAttribute('role', 'img');
   el.setAttribute('aria-label', 'Local certo');
   el.innerHTML =
-    '<svg width="40" height="40" viewBox="0 0 24 24" fill="#1F6B4F" stroke="#17231E" stroke-width="1.4"><path d="M5 21V4"/><path d="M5 4h12l-2.5 4L17 12H5"/></svg>';
+    '<svg width="48" height="48" viewBox="0 0 24 24"><path d="M5 22V3" stroke="#17231E" stroke-width="2.4" stroke-linecap="round"/><path d="M5 3h13l-3 4.5L18 12H5z" fill="#1A7A50" stroke="#17231E" stroke-width="1.8" stroke-linejoin="round"/></svg>';
   return el;
 }
 
-function bubbleElement(label: string, color: string): HTMLElement {
+/** Pino do palpite: o avatar do jogador, caindo no mapa um depois do outro. */
+function avatarElement(g: ResultGuess, i: number): HTMLElement {
   const el = document.createElement('div');
-  el.className = 'map-bubble';
-  el.style.background = color;
-  el.textContent = label.slice(0, 1).toUpperCase();
-  el.title = label;
+  el.className = 'map-avatar drop';
+  el.style.animationDelay = `${200 + i * STAGGER_MS}ms`;
+  el.title = g.label;
+  el.dataset.resultPin = '';
+  el.innerHTML = pinSvg(g.avatar, PIN_SIZE);
   return el;
 }
 
@@ -39,7 +46,7 @@ export function ResultMap({ answer, guesses }: { answer: MapPoint; guesses: Resu
     const placed = guesses.filter((g): g is ResultGuess & { guess: LatLng } => g.guess !== null);
 
     new Marker({ element: flagElement(), anchor: 'bottom-left' }).setLngLat(toLngLat(answer)).addTo(m);
-    for (const g of placed) new Marker({ element: bubbleElement(g.label, g.color) }).setLngLat(toLngLat(g.guess)).addTo(m);
+    placed.forEach((g, i) => new Marker({ element: avatarElement(g, i), anchor: 'bottom' }).setLngLat(toLngLat(g.guess)).addTo(m));
 
     m.on('load', () => {
       m.addSource('lines', {
@@ -53,13 +60,13 @@ export function ResultMap({ answer, guesses }: { answer: MapPoint; guesses: Resu
           })),
         },
       });
-      m.addLayer({ id: 'lines', type: 'line', source: 'lines', paint: { 'line-color': '#17231E', 'line-width': 2, 'line-dasharray': [2, 1.5] } });
+      m.addLayer({ id: 'lines', type: 'line', source: 'lines', paint: { 'line-color': '#17231E', 'line-width': 3, 'line-dasharray': [1, 2] } });
     });
 
     if (placed.length) {
       const bounds = new LngLatBounds(toLngLat(answer), toLngLat(answer));
       for (const g of placed) bounds.extend(toLngLat(g.guess));
-      m.fitBounds(bounds, { padding: 70, maxZoom: 13, duration: 0 });
+      m.fitBounds(bounds, { padding: 80, maxZoom: 13, duration: 0 });
     } else {
       m.jumpTo({ center: toLngLat(answer), zoom: 10 });
     }

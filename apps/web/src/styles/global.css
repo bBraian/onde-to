@@ -251,7 +251,11 @@ fieldset.field { border: 0; margin: 0; padding: 0; min-width: 0; }
 /* ── modo "Neste PC" ────────────────────────────────────────────────────────────── */
 .turn-gate { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; padding: 24px; text-align: center; }
 .turn-gate h1 { margin: 0; font-size: clamp(40px, 6vw, 64px); }
-.player-chips { position: absolute; z-index: 3; right: 16px; bottom: calc(16px + 250px + 10px + 60px + 18px); display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; max-width: 660px; }
+.player-chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+.local-setup { width: 100%; max-width: 1180px; margin: 0 auto; padding: 8px 20px 32px; display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
+.local-setup > .card:first-child { flex: 999 1 520px; min-width: 0; }
+.local-setup > .card:last-child { flex: 1 1 340px; }
+.turn-chip { display: inline-flex; align-items: center; gap: 8px; background: var(--card); border: var(--border); border-radius: 999px; box-shadow: var(--shadow-sm); padding: 2px 14px 2px 4px; font-weight: 800; }
 .player-chip { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 2px 12px 2px 4px; border: var(--border); border-radius: 999px; background: var(--card); color: var(--ink); font-weight: 800; box-shadow: 0 4px 0 var(--ink); cursor: pointer; }
 .player-chip[aria-pressed='true'] { background: var(--ink); color: var(--paper); }
 .player-chip[data-done] { outline: 3px solid var(--guessed); outline-offset: 2px; }
@@ -270,6 +274,7 @@ fieldset.field { border: 0; margin: 0; padding: 0; min-width: 0; }
 @keyframes boing { 0% { transform: scale(0.9) translateY(-6px); } 60% { transform: scale(1.06) translateY(0); } 100% { transform: scale(1); } }
 @keyframes drift { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(18px); } }
 @keyframes shrink { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+@keyframes ring { 0% { box-shadow: 0 6px 0 var(--ink), 0 0 0 0 rgba(26, 122, 80, 0.55); } 100% { box-shadow: 0 6px 0 var(--ink), 0 0 0 14px rgba(26, 122, 80, 0); } }
 .bob { animation: bob 2.6s var(--ease-in-out) infinite; }
 .pop { animation: pop 220ms var(--ease-out) both; }
 .drop { animation: drop 650ms var(--ease-out) both; }
@@ -278,8 +283,10 @@ fieldset.field { border: 0; margin: 0; padding: 0; min-width: 0; }
 .boing { animation: boing 260ms var(--ease-out); }
 .drift { animation: drift 9s var(--ease-in-out) infinite; }
 .shrink { animation: shrink linear both; }
+/* Chamada para ação: anel que pulsa sem mexer no tamanho do botão (o alvo do clique fica parado). */
+.pulse-ring:not(:disabled) { animation: ring 1.6s var(--ease-out) infinite; }
 @media (prefers-reduced-motion: reduce) {
-  .bob, .pulse, .drift, .shake, .boing, .drop, .hud-timer[data-urgent] { animation: none; }
+  .bob, .pulse, .pulse-ring:not(:disabled), .drift, .shake, .boing, .drop, .hud-timer[data-urgent] { animation: none; }
   .pop { animation: fade-in 160ms ease both; }
   .btn, .chip, .swatch, .card.lift, .hp-fill, .guess-panel, .guess-panel .guess-map { transition: none; }
 }

@@ -28,7 +28,7 @@ const { ResultMap } = await import('../src/components/ResultMap');
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 const answer = () => ({ imageId: 'img-1', lat: -23.5, lng: -46.6, regiao: 'SP' });
-const guesses = () => [{ guess: { lat: -22.9, lng: -43.2 }, label: 'Ana', color: '#B8461A' }];
+const guesses = () => [{ guess: { lat: -22.9, lng: -43.2 }, label: 'Ana', avatar: { color: '#FF6B35', eyes: 'normal', mouth: 'sorriso', acc: 'nenhum' } as const }];
 
 test('mesmo resultado em objetos novos não recria o mapa', async () => {
   created.length = 0;
